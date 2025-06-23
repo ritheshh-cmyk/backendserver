@@ -262,26 +262,38 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            {t('needsParts')}
+                          <FormLabel className="flex items-center gap-2">
+                            <Package className="w-4 h-4" />
+                            Brought items from other store
                           </FormLabel>
+                          <p className="text-xs text-business-neutral">
+                            Check if you purchased parts from Patels, Mahalaxmi, Rathod, Sri, Ramdev, Hub etc.
+                          </p>
                         </div>
                       </FormItem>
                     )}
                   />
                   
                   {form.watch("requiresInventory") && (
-                    <div className="mt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowNeedsPartsDialog(true)}
-                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                      >
-                        <Package className="w-4 h-4 mr-2" />
-                        View Available Parts
-                      </Button>
+                    <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                          External Store Purchase
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowNeedsPartsDialog(true)}
+                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        >
+                          <Package className="w-4 h-4 mr-2" />
+                          View Available Parts
+                        </Button>
+                      </div>
+                      <p className="text-xs text-orange-700 dark:text-orange-300">
+                        Record the cost of items purchased from external suppliers to calculate accurate profit margins.
+                      </p>
                     </div>
                   )}
                 </div>

@@ -149,10 +149,11 @@ export class MemStorage implements IStorage {
       status: insertTransaction.status || "completed",
       remarks: insertTransaction.remarks || null,
       requiresInventory: insertTransaction.requiresInventory || false,
-      actualCost: insertTransaction.actualCost?.toString() || "0",
+      actualCost: (insertTransaction.actualCost || 0).toString(),
       profit: insertTransaction.profit?.toString() || (insertTransaction.repairCost - (insertTransaction.actualCost || 0)).toString(),
       supplierName: insertTransaction.supplierName || null,
       partsCost: insertTransaction.partsCost || null,
+      customSupplierName: insertTransaction.customSupplierName || null,
     };
     this.transactions.set(id, transaction);
     return transaction;
@@ -422,16 +423,18 @@ export class MemStorage implements IStorage {
       unitCost: insertOrder.unitCost.toString(),
       totalCost: insertOrder.totalCost.toString(),
       status: insertOrder.status || "pending",
-      supplierId: insertOrder.supplierId,
+      supplierId: insertOrder.supplierId || 0,
     };
     this.purchaseOrders.set(id, order);
 
     // Update supplier's total due
-    const supplier = this.suppliers.get(insertOrder.supplierId);
-    if (supplier) {
-      const currentDue = parseFloat(supplier.totalDue);
-      supplier.totalDue = (currentDue + insertOrder.totalCost).toString();
-      this.suppliers.set(insertOrder.supplierId, supplier);
+    if (insertOrder.supplierId) {
+      const supplier = this.suppliers.get(insertOrder.supplierId);
+      if (supplier) {
+        const currentDue = parseFloat(supplier.totalDue);
+        supplier.totalDue = (currentDue + insertOrder.totalCost).toString();
+        this.suppliers.set(insertOrder.supplierId, supplier);
+      }
     }
 
     return order;
@@ -451,13 +454,15 @@ export class MemStorage implements IStorage {
       id,
       paymentDate: new Date(),
       amount: insertPayment.amount.toString(),
-      supplierId: insertPayment.supplierId,
+      supplierId: insertPayment.supplierId || 0,
       description: insertPayment.description || null,
     };
     this.supplierPayments.set(id, payment);
 
     // Update supplier's total due
-    await this.updateSupplierDue(insertPayment.supplierId, insertPayment.amount);
+    if (insertPayment.supplierId) {
+      await this.updateSupplierDue(insertPayment.supplierId, insertPayment.amount);
+    }
 
     return payment;
   }

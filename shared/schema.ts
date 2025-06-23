@@ -20,6 +20,7 @@ export const transactions = pgTable("transactions", {
   requiresInventory: boolean("requires_inventory").default(false).notNull(),
   supplierName: text("supplier_name"), // Where parts were sourced from
   partsCost: text("parts_cost"), // JSON string of parts breakdown
+  customSupplierName: text("custom_supplier_name"), // Custom supplier name if "Other" is selected
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

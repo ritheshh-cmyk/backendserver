@@ -327,6 +327,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports export endpoint
+  app.get("/api/reports/export", async (req, res) => {
+    try {
+      const reportType = req.query.type as string || "overview";
+      const dateRange = req.query.dateRange as string || "month";
+      
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(`${reportType}-${dateRange}`);
+
+      // Get data based on date range
+      const today = new Date();
+      let startDate: Date;
+      let endDate = new Date();
+
+      switch (dateRange) {
+        case "today":
+          startDate = new Date(today);
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case "week":
+          startDate = new Date(today);
+          startDate.setDate(today.getDate() - 7);
+          break;
+        case "month":
+          startDate = new Date(today);
+          startDate.setMonth(today.getMonth() - 1);
+          break;
+        default:
+          startDate = new Date(0);
+      }
+
+      const transactions = await storage.getTransactionsByDateRange(startDate, endDate);
+      const expenditures = await storage.getExpendituresByDateRange(startDate, endDate);
+
+      if (reportType === "pl") {
+        // P&L Statement Export
+        worksheet.columns = [
+          { header: "Description", key: "description", width: 30 },
+          { header: "Amount", key: "amount", width: 15 },
+          { header: "Percentage", key: "percentage", width: 15 }
+        ];
+
+        const totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.repairCost), 0);
+        const totalCogs = transactions.reduce((sum, t) => sum + parseFloat(t.actualCost || "0"), 0);
+        const totalExpenses = expenditures.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+        const grossProfit = totalRevenue - totalCogs;
+        const netProfit = grossProfit - totalExpenses;
+
+        worksheet.addRow({ description: "REVENUE", amount: "", percentage: "" });
+        worksheet.addRow({ description: "Repair Services Revenue", amount: totalRevenue, percentage: "100.0%" });
+        worksheet.addRow({ description: "", amount: "", percentage: "" });
+        
+        worksheet.addRow({ description: "COST OF GOODS SOLD", amount: "", percentage: "" });
+        worksheet.addRow({ description: "Parts & Materials", amount: totalCogs, percentage: `${((totalCogs/totalRevenue)*100).toFixed(1)}%` });
+        worksheet.addRow({ description: "", amount: "", percentage: "" });
+        
+        worksheet.addRow({ description: "GROSS PROFIT", amount: grossProfit, percentage: `${((grossProfit/totalRevenue)*100).toFixed(1)}%` });
+        worksheet.addRow({ description: "", amount: "", percentage: "" });
+        
+        worksheet.addRow({ description: "OPERATING EXPENSES", amount: "", percentage: "" });
+        const expensesByCategory = expenditures.reduce((acc: Record<string, number>, exp) => {
+          if (!acc[exp.category]) acc[exp.category] = 0;
+          acc[exp.category] += parseFloat(exp.amount);
+          return acc;
+        }, {});
+        
+        Object.entries(expensesByCategory).forEach(([category, amount]) => {
+          worksheet.addRow({ 
+            description: category, 
+            amount: amount as number, 
+            percentage: `${(((amount as number)/totalRevenue)*100).toFixed(1)}%` 
+          });
+        });
+        
+        worksheet.addRow({ description: "Total Operating Expenses", amount: totalExpenses, percentage: `${((totalExpenses/totalRevenue)*100).toFixed(1)}%` });
+        worksheet.addRow({ description: "", amount: "", percentage: "" });
+        worksheet.addRow({ description: "NET PROFIT", amount: netProfit, percentage: `${((netProfit/totalRevenue)*100).toFixed(1)}%` });
+        
+      } else {
+        // Default transaction export
+        worksheet.columns = [
+          { header: "Date", key: "date", width: 15 },
+          { header: "Customer", key: "customer", width: 20 },
+          { header: "Mobile", key: "mobile", width: 15 },
+          { header: "Device", key: "device", width: 20 },
+          { header: "Repair Type", key: "repair", width: 20 },
+          { header: "Revenue", key: "revenue", width: 12 },
+          { header: "Cost", key: "cost", width: 12 },
+          { header: "Profit", key: "profit", width: 12 },
+          { header: "Payment Method", key: "payment", width: 15 },
+          { header: "Supplier", key: "supplier", width: 15 }
+        ];
+
+        transactions.forEach(transaction => {
+          worksheet.addRow({
+            date: transaction.createdAt.toLocaleDateString(),
+            customer: transaction.customerName,
+            mobile: transaction.mobileNumber,
+            device: transaction.deviceModel,
+            repair: transaction.repairType,
+            revenue: parseFloat(transaction.repairCost),
+            cost: parseFloat(transaction.actualCost || "0"),
+            profit: parseFloat(transaction.profit || "0"),
+            payment: transaction.paymentMethod,
+            supplier: transaction.supplierName || ""
+          });
+        });
+      }
+
+      // Set response headers for file download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${reportType}-report-${dateRange}.xlsx"`);
+
+      // Write to response
+      await workbook.xlsx.write(res);
+      res.end();
+      
+    } catch (error) {
+      console.error("Report export error:", error);
+      res.status(500).json({ message: "Failed to export report" });
+    }
+  });
+
   app.get("/api/export/excel", async (req, res) => {
     try {
       const transactions = await storage.getTransactions(1000, 0); // Export up to 1000 records
