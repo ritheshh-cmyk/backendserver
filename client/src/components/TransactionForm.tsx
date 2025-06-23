@@ -1,0 +1,388 @@
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertTransactionSchema, type InsertTransaction } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { calculateChange } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { 
+  User, 
+  Wrench, 
+  CreditCard, 
+  StickyNote, 
+  X, 
+  Save, 
+  Check 
+} from "lucide-react";
+
+interface TransactionFormProps {
+  onTransactionChange?: (transaction: Partial<InsertTransaction>) => void;
+}
+
+export default function TransactionForm({ onTransactionChange }: TransactionFormProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { t } = useLanguage();
+
+  const form = useForm<InsertTransaction>({
+    resolver: zodResolver(insertTransactionSchema),
+    defaultValues: {
+      customerName: "",
+      mobileNumber: "",
+      deviceModel: "",
+      repairType: "",
+      repairCost: 0,
+      paymentMethod: "",
+      amountGiven: 0,
+      changeReturned: 0,
+      freeGlassInstallation: false,
+      remarks: "",
+      status: "completed",
+    },
+  });
+
+  const createTransactionMutation = useMutation({
+    mutationFn: async (data: InsertTransaction) => {
+      const response = await apiRequest("POST", "/api/transactions", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: t('transactionCreated'),
+      });
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/today"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/week"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/month"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats/year"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || t('failedToCreateTransaction'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const repairCost = form.watch("repairCost");
+  const amountGiven = form.watch("amountGiven");
+
+  // Calculate change automatically
+  const changeReturned = calculateChange(repairCost || 0, amountGiven || 0);
+  
+  // Use useEffect to prevent re-render loops
+  React.useEffect(() => {
+    form.setValue("changeReturned", changeReturned);
+  }, [repairCost, amountGiven, form]);
+
+  // Update parent component with current form values
+  React.useEffect(() => {
+    if (onTransactionChange) {
+      const formValues = form.getValues();
+      onTransactionChange({ ...formValues, changeReturned });
+    }
+  }, [repairCost, amountGiven, changeReturned]);
+
+  const onSubmit = (data: InsertTransaction) => {
+    createTransactionMutation.mutate(data);
+  };
+
+  const paymentMethods = [
+    { value: "cash", label: t('cash') },
+    { value: "online", label: t('online') },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Customer Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+                <User className="w-5 h-5 mr-2 text-primary" />
+                {t('customerInformation')}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('customerName')} *</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('enterCustomerName')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="mobileNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('mobileNumber')} *</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder={t('enterMobileNumber')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="sm:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="deviceModel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('deviceModel')} *</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('deviceModelPlaceholder')} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Repair Details Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+                <Wrench className="w-5 h-5 mr-2 text-primary" />
+                {t('repairDetails')}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="repairType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Repair Type *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Screen Replacement, Battery Change" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="repairCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Repair Cost *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-business-neutral">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            className="pl-8"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="sm:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="freeGlassInstallation"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t('freeGlassInstallation')}
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+                <CreditCard className="w-5 h-5 mr-2 text-primary" />
+                {t('paymentInformation')}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('paymentMethod')} *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('selectPaymentMethod')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {paymentMethods.map((method) => (
+                            <SelectItem key={method.value} value={method.value}>
+                              {method.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amountGiven"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('amountGiven')} *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-business-neutral">₹</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            className="pl-8"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="changeReturned"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('changeReturned')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-business-neutral">₹</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="pl-8 bg-gray-50 dark:bg-gray-800"
+                            value={changeReturned.toFixed(2)}
+                            readOnly
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              </div>
+            </div>
+
+            {/* Additional Notes Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+                <StickyNote className="w-5 h-5 mr-2 text-primary" />
+                {t('additionalNotes')}
+              </h3>
+              <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('remarks')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={3}
+                        placeholder={t('additionalNotesPlaceholder')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex flex-col sm:flex-row sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+              <Button 
+                type="button" 
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => form.reset()}
+              >
+                <X className="w-4 h-4 mr-2" />
+                {t('cancel')}
+              </Button>
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                <Button 
+                  type="button" 
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  disabled={createTransactionMutation.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {t('saveDraft')}
+                </Button>
+                <Button 
+                  type="submit"
+                  className="w-full sm:w-auto bg-primary hover:bg-blue-700"
+                  disabled={createTransactionMutation.isPending}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  {createTransactionMutation.isPending ? t('processing') : t('completeTransaction')}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
