@@ -1,4 +1,26 @@
-import { users, transactions, type User, type InsertUser, type Transaction, type InsertTransaction } from "@shared/schema";
+import { 
+  users, 
+  transactions, 
+  inventoryItems, 
+  suppliers, 
+  purchaseOrders, 
+  supplierPayments, 
+  expenditures,
+  type User, 
+  type InsertUser, 
+  type Transaction, 
+  type InsertTransaction,
+  type InventoryItem,
+  type InsertInventoryItem,
+  type Supplier,
+  type InsertSupplier,
+  type PurchaseOrder,
+  type InsertPurchaseOrder,
+  type SupplierPayment,
+  type InsertSupplierPayment,
+  type Expenditure,
+  type InsertExpenditure
+} from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -34,19 +56,67 @@ export interface IStorage {
     totalTransactions: number;
     totalCustomers: number;
   }>;
+
+  // Inventory methods
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  getInventoryItems(limit?: number, offset?: number): Promise<InventoryItem[]>;
+  searchInventoryItems(query: string): Promise<InventoryItem[]>;
+  updateInventoryItem(id: number, updates: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined>;
+  deleteInventoryItem(id: number): Promise<boolean>;
+
+  // Supplier methods
+  createSupplier(supplier: InsertSupplier): Promise<Supplier>;
+  getSuppliers(limit?: number, offset?: number): Promise<Supplier[]>;
+  searchSuppliers(query: string): Promise<Supplier[]>;
+  updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined>;
+  updateSupplierDue(id: number, amount: number): Promise<void>;
+
+  // Purchase order methods
+  createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder>;
+  getPurchaseOrders(limit?: number, offset?: number): Promise<PurchaseOrder[]>;
+
+  // Supplier payment methods
+  createSupplierPayment(payment: InsertSupplierPayment): Promise<SupplierPayment>;
+  getSupplierPayments(supplierId?: number): Promise<SupplierPayment[]>;
+
+  // Expenditure methods
+  createExpenditure(expenditure: InsertExpenditure): Promise<Expenditure>;
+  getExpenditures(limit?: number, offset?: number): Promise<Expenditure[]>;
+  searchExpenditures(query: string): Promise<Expenditure[]>;
+  getExpendituresByDateRange(startDate: Date, endDate: Date): Promise<Expenditure[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private transactions: Map<number, Transaction>;
+  private inventoryItems: Map<number, InventoryItem>;
+  private suppliers: Map<number, Supplier>;
+  private purchaseOrders: Map<number, PurchaseOrder>;
+  private supplierPayments: Map<number, SupplierPayment>;
+  private expenditures: Map<number, Expenditure>;
   private currentUserId: number;
   private currentTransactionId: number;
+  private currentInventoryId: number;
+  private currentSupplierId: number;
+  private currentPurchaseOrderId: number;
+  private currentSupplierPaymentId: number;
+  private currentExpenditureId: number;
 
   constructor() {
     this.users = new Map();
     this.transactions = new Map();
+    this.inventoryItems = new Map();
+    this.suppliers = new Map();
+    this.purchaseOrders = new Map();
+    this.supplierPayments = new Map();
+    this.expenditures = new Map();
     this.currentUserId = 1;
     this.currentTransactionId = 1;
+    this.currentInventoryId = 1;
+    this.currentSupplierId = 1;
+    this.currentPurchaseOrderId = 1;
+    this.currentSupplierPaymentId = 1;
+    this.currentExpenditureId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -78,6 +148,11 @@ export class MemStorage implements IStorage {
       freeGlassInstallation: insertTransaction.freeGlassInstallation || false,
       status: insertTransaction.status || "completed",
       remarks: insertTransaction.remarks || null,
+      requiresInventory: insertTransaction.requiresInventory || false,
+      actualCost: insertTransaction.actualCost?.toString() || "0",
+      profit: insertTransaction.profit?.toString() || (insertTransaction.repairCost - (insertTransaction.actualCost || 0)).toString(),
+      supplierName: insertTransaction.supplierName || null,
+      partsCost: insertTransaction.partsCost || null,
     };
     this.transactions.set(id, transaction);
     return transaction;
@@ -229,6 +304,207 @@ export class MemStorage implements IStorage {
       totalTransactions: yearTransactions.length,
       totalCustomers: uniqueCustomers.size,
     };
+  }
+
+  // Inventory methods
+  async createInventoryItem(insertItem: InsertInventoryItem): Promise<InventoryItem> {
+    const id = this.currentInventoryId++;
+    const item: InventoryItem = {
+      ...insertItem,
+      id,
+      createdAt: new Date(),
+      cost: insertItem.cost.toString(),
+      sellingPrice: insertItem.sellingPrice.toString(),
+      quantity: insertItem.quantity,
+      compatibleDevices: insertItem.compatibleDevices || null,
+    };
+    this.inventoryItems.set(id, item);
+    return item;
+  }
+
+  async getInventoryItems(limit: number = 50, offset: number = 0): Promise<InventoryItem[]> {
+    const allItems = Array.from(this.inventoryItems.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return allItems.slice(offset, offset + limit);
+  }
+
+  async searchInventoryItems(query: string): Promise<InventoryItem[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.inventoryItems.values()).filter(item =>
+      item.partName.toLowerCase().includes(lowercaseQuery) ||
+      item.partType.toLowerCase().includes(lowercaseQuery) ||
+      item.supplier.toLowerCase().includes(lowercaseQuery) ||
+      (item.compatibleDevices && item.compatibleDevices.toLowerCase().includes(lowercaseQuery))
+    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateInventoryItem(id: number, updates: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    const existingItem = this.inventoryItems.get(id);
+    if (!existingItem) return undefined;
+
+    const updatedItem: InventoryItem = {
+      ...existingItem,
+      ...updates,
+      cost: updates.cost?.toString() || existingItem.cost,
+      sellingPrice: updates.sellingPrice?.toString() || existingItem.sellingPrice,
+      quantity: updates.quantity || existingItem.quantity,
+    };
+    
+    this.inventoryItems.set(id, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteInventoryItem(id: number): Promise<boolean> {
+    return this.inventoryItems.delete(id);
+  }
+
+  // Supplier methods
+  async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
+    const id = this.currentSupplierId++;
+    const supplier: Supplier = {
+      ...insertSupplier,
+      id,
+      totalDue: "0",
+      createdAt: new Date(),
+      contactNumber: insertSupplier.contactNumber || null,
+      address: insertSupplier.address || null,
+    };
+    this.suppliers.set(id, supplier);
+    return supplier;
+  }
+
+  async getSuppliers(limit: number = 50, offset: number = 0): Promise<Supplier[]> {
+    const allSuppliers = Array.from(this.suppliers.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return allSuppliers.slice(offset, offset + limit);
+  }
+
+  async searchSuppliers(query: string): Promise<Supplier[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.suppliers.values()).filter(supplier =>
+      supplier.name.toLowerCase().includes(lowercaseQuery) ||
+      (supplier.contactNumber && supplier.contactNumber.includes(query)) ||
+      (supplier.address && supplier.address.toLowerCase().includes(lowercaseQuery))
+    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined> {
+    const existingSupplier = this.suppliers.get(id);
+    if (!existingSupplier) return undefined;
+
+    const updatedSupplier: Supplier = {
+      ...existingSupplier,
+      ...updates,
+    };
+    
+    this.suppliers.set(id, updatedSupplier);
+    return updatedSupplier;
+  }
+
+  async updateSupplierDue(id: number, amount: number): Promise<void> {
+    const supplier = this.suppliers.get(id);
+    if (supplier) {
+      const currentDue = parseFloat(supplier.totalDue);
+      const newDue = Math.max(0, currentDue - amount);
+      supplier.totalDue = newDue.toString();
+      this.suppliers.set(id, supplier);
+    }
+  }
+
+  // Purchase order methods
+  async createPurchaseOrder(insertOrder: InsertPurchaseOrder): Promise<PurchaseOrder> {
+    const id = this.currentPurchaseOrderId++;
+    const order: PurchaseOrder = {
+      ...insertOrder,
+      id,
+      orderDate: new Date(),
+      receivedDate: null,
+      unitCost: insertOrder.unitCost.toString(),
+      totalCost: insertOrder.totalCost.toString(),
+      status: insertOrder.status || "pending",
+      supplierId: insertOrder.supplierId,
+    };
+    this.purchaseOrders.set(id, order);
+
+    // Update supplier's total due
+    const supplier = this.suppliers.get(insertOrder.supplierId);
+    if (supplier) {
+      const currentDue = parseFloat(supplier.totalDue);
+      supplier.totalDue = (currentDue + insertOrder.totalCost).toString();
+      this.suppliers.set(insertOrder.supplierId, supplier);
+    }
+
+    return order;
+  }
+
+  async getPurchaseOrders(limit: number = 50, offset: number = 0): Promise<PurchaseOrder[]> {
+    const allOrders = Array.from(this.purchaseOrders.values())
+      .sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
+    return allOrders.slice(offset, offset + limit);
+  }
+
+  // Supplier payment methods
+  async createSupplierPayment(insertPayment: InsertSupplierPayment): Promise<SupplierPayment> {
+    const id = this.currentSupplierPaymentId++;
+    const payment: SupplierPayment = {
+      ...insertPayment,
+      id,
+      paymentDate: new Date(),
+      amount: insertPayment.amount.toString(),
+      supplierId: insertPayment.supplierId,
+      description: insertPayment.description || null,
+    };
+    this.supplierPayments.set(id, payment);
+
+    // Update supplier's total due
+    await this.updateSupplierDue(insertPayment.supplierId, insertPayment.amount);
+
+    return payment;
+  }
+
+  async getSupplierPayments(supplierId?: number): Promise<SupplierPayment[]> {
+    let payments = Array.from(this.supplierPayments.values());
+    
+    if (supplierId) {
+      payments = payments.filter(payment => payment.supplierId === supplierId);
+    }
+    
+    return payments.sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime());
+  }
+
+  // Expenditure methods
+  async createExpenditure(insertExpenditure: InsertExpenditure): Promise<Expenditure> {
+    const id = this.currentExpenditureId++;
+    const expenditure: Expenditure = {
+      ...insertExpenditure,
+      id,
+      createdAt: new Date(),
+      amount: insertExpenditure.amount.toString(),
+      recipient: insertExpenditure.recipient || null,
+    };
+    this.expenditures.set(id, expenditure);
+    return expenditure;
+  }
+
+  async getExpenditures(limit: number = 50, offset: number = 0): Promise<Expenditure[]> {
+    const allExpenditures = Array.from(this.expenditures.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return allExpenditures.slice(offset, offset + limit);
+  }
+
+  async searchExpenditures(query: string): Promise<Expenditure[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.expenditures.values()).filter(expenditure =>
+      expenditure.description.toLowerCase().includes(lowercaseQuery) ||
+      expenditure.category.toLowerCase().includes(lowercaseQuery) ||
+      (expenditure.recipient && expenditure.recipient.toLowerCase().includes(lowercaseQuery))
+    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getExpendituresByDateRange(startDate: Date, endDate: Date): Promise<Expenditure[]> {
+    return Array.from(this.expenditures.values()).filter(expenditure =>
+      expenditure.createdAt >= startDate && expenditure.createdAt <= endDate
+    ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 }
 

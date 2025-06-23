@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,7 +11,10 @@ import {
   History, 
   Users, 
   BarChart3,
-  X
+  X,
+  Package,
+  CreditCard,
+  Store
 } from "lucide-react";
 
 interface MobileHeaderProps {
@@ -20,12 +24,15 @@ interface MobileHeaderProps {
 export default function MobileHeader({ onExport }: MobileHeaderProps) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
 
   const navigation = [
-    { name: "New Transaction", href: "/", icon: PlusCircle, current: location === "/" },
-    { name: "Transaction History", href: "/history", icon: History, current: location === "/history" },
-    { name: "Customers", href: "/customers", icon: Users, current: location === "/customers" },
-    { name: "Reports", href: "/reports", icon: BarChart3, current: location === "/reports" },
+    { name: t('newTransaction'), href: "/", icon: PlusCircle, current: location === "/" },
+    { name: t('transactionHistory'), href: "/history", icon: History, current: location === "/history" },
+    { name: t('inventory'), href: "/inventory", icon: Package, current: location === "/inventory" },
+    { name: t('expenditure'), href: "/expenditure", icon: CreditCard, current: location === "/expenditure" },
+    { name: t('suppliers'), href: "/suppliers", icon: Store, current: location === "/suppliers" },
+    { name: t('reports'), href: "/reports", icon: BarChart3, current: location === "/reports" },
   ];
 
   return (
@@ -40,7 +47,7 @@ export default function MobileHeader({ onExport }: MobileHeaderProps) {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h1 className="text-lg font-bold text-foreground">PhoneRepair Pro</h1>
+                <h1 className="text-lg font-bold text-foreground">{t('appTitle')}</h1>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -74,7 +81,7 @@ export default function MobileHeader({ onExport }: MobileHeaderProps) {
               </nav>
             </SheetContent>
           </Sheet>
-          <h1 className="text-lg font-semibold text-foreground">PhoneRepair Pro</h1>
+          <h1 className="text-lg font-semibold text-foreground">{t('appTitle')}</h1>
         </div>
         <Button 
           onClick={onExport}
@@ -82,7 +89,7 @@ export default function MobileHeader({ onExport }: MobileHeaderProps) {
           className="bg-primary text-white px-3 py-2 text-sm font-medium"
         >
           <Download className="w-4 h-4 mr-1" />
-          Export
+          {t('export')}
         </Button>
       </div>
     </header>

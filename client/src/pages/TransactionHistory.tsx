@@ -21,13 +21,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Eye, Printer, Edit, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Eye, Printer, Edit, Download, EyeOff } from "lucide-react";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Transaction } from "@shared/schema";
 
 export default function TransactionHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const { t } = useLanguage();
 
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions", searchQuery, dateFilter],
@@ -59,6 +64,11 @@ export default function TransactionHistory() {
     } catch (error) {
       console.error("Export failed:", error);
     }
+  };
+
+  const viewTransactionDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowDetailsDialog(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -166,6 +176,7 @@ export default function TransactionHistory() {
                             <TableHead>Repair</TableHead>
                             <TableHead>Payment</TableHead>
                             <TableHead>Amount</TableHead>
+                            <TableHead>Profit</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Actions</TableHead>
                           </TableRow>
@@ -201,13 +212,36 @@ export default function TransactionHistory() {
                                 {formatCurrency(transaction.repairCost)}
                               </TableCell>
                               <TableCell>
+                                {transaction.requiresInventory ? (
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-green-600 font-medium">
+                                      {formatCurrency(transaction.profit || 0)}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => viewTransactionDetails(transaction)}
+                                      className="p-1"
+                                    >
+                                      <EyeOff className="w-3 h-3 text-orange-600" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
                                 <Badge className={getStatusColor(transaction.status)}>
                                   {transaction.status}
                                 </Badge>
                               </TableCell>
                               <TableCell>
                                 <div className="flex space-x-2">
-                                  <Button variant="ghost" size="sm">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => viewTransactionDetails(transaction)}
+                                  >
                                     <Eye className="w-4 h-4" />
                                   </Button>
                                   <Button variant="ghost" size="sm">

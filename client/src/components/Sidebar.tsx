@@ -6,7 +6,10 @@ import {
   Users, 
   BarChart3, 
   Download,
-  Smartphone
+  Smartphone,
+  Package,
+  CreditCard,
+  Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,7 +25,9 @@ export default function Sidebar({ onExport }: SidebarProps) {
   const navigation = [
     { name: t('newTransaction'), href: "/", icon: PlusCircle, current: location === "/" },
     { name: t('transactionHistory'), href: "/history", icon: History, current: location === "/history" },
-    { name: t('customers'), href: "/customers", icon: Users, current: location === "/customers" },
+    { name: t('inventory'), href: "/inventory", icon: Package, current: location === "/inventory" },
+    { name: t('expenditure'), href: "/expenditure", icon: CreditCard, current: location === "/expenditure" },
+    { name: t('suppliers'), href: "/suppliers", icon: Store, current: location === "/suppliers" },
     { name: t('reports'), href: "/reports", icon: BarChart3, current: location === "/reports" },
   ];
 

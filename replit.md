@@ -48,6 +48,10 @@ PhoneRepair Pro is a full-stack web application designed for managing phone repa
 - Real-time form validation and error handling
 - Toast notifications for user feedback
 - Loading states and proper error boundaries
+- Dark/light mode toggle with theme persistence
+- Bilingual support (English/Telugu) with comprehensive translations
+- Hidden profit details with eye icon reveal functionality
+- Advanced search and filtering capabilities
 
 ## Data Flow
 
@@ -93,7 +97,16 @@ PhoneRepair Pro is a full-stack web application designed for managing phone repa
 
 ## Changelog
 
-- June 23, 2025. Initial setup
+- June 23, 2025. Initial setup with basic transaction management
+- June 23, 2025. Added advanced features:
+  - Dark mode and English/Telugu language support
+  - Inventory management with parts tracking
+  - Expenditure tracking system
+  - Supplier management with payment tracking
+  - Profit calculation with hidden cost breakdown
+  - Eye icon functionality to reveal/hide sensitive cost data
+  - Enhanced search across all transaction fields
+  - Mobile-responsive design improvements
 
 ## User Preferences
 

@@ -7,6 +7,9 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Dashboard from "@/pages/Dashboard";
 import TransactionHistory from "@/pages/TransactionHistory";
+import InventoryPage from "@/pages/InventoryPage";
+import ExpenditurePage from "@/pages/ExpenditurePage";
+import SuppliersPage from "@/pages/SuppliersPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -14,6 +17,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/history" component={TransactionHistory} />
+      <Route path="/inventory" component={InventoryPage} />
+      <Route path="/expenditure" component={ExpenditurePage} />
+      <Route path="/suppliers" component={SuppliersPage} />
       <Route component={NotFound} />
     </Switch>
   );

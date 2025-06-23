@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertTransactionSchema, type InsertTransaction } from "@shared/schema";
@@ -28,6 +29,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { 
   User, 
   Wrench, 
@@ -35,7 +38,9 @@ import {
   StickyNote, 
   X, 
   Save, 
-  Check 
+  Check, 
+  Package,
+  Plus
 } from "lucide-react";
 
 interface TransactionFormProps {
@@ -46,6 +51,7 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useLanguage();
+  const [showNeedsPartsDialog, setShowNeedsPartsDialog] = useState(false);
 
   const form = useForm<InsertTransaction>({
     resolver: zodResolver(insertTransactionSchema),
@@ -59,6 +65,11 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
       amountGiven: 0,
       changeReturned: 0,
       freeGlassInstallation: false,
+      requiresInventory: false,
+      actualCost: 0,
+      profit: 0,
+      supplierName: "",
+      partsCost: "",
       remarks: "",
       status: "completed",
     },
@@ -218,7 +229,7 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
                     </FormItem>
                   )}
                 />
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 space-y-4">
                   <FormField
                     control={form.control}
                     name="freeGlassInstallation"
@@ -238,6 +249,41 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
                       </FormItem>
                     )}
                   />
+                  
+                  <FormField
+                    control={form.control}
+                    name="requiresInventory"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t('needsParts')}
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch("requiresInventory") && (
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowNeedsPartsDialog(true)}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        View Available Parts
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -383,6 +429,73 @@ export default function TransactionForm({ onTransactionChange }: TransactionForm
           </form>
         </Form>
       </CardContent>
+
+      {/* Parts Inventory Dialog */}
+      <Dialog open={showNeedsPartsDialog} onOpenChange={setShowNeedsPartsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Available Parts & Inventory</DialogTitle>
+          </DialogHeader>
+          <PartsInventoryView deviceModel={form.watch("deviceModel")} repairType={form.watch("repairType")} />
+        </DialogContent>
+      </Dialog>
     </Card>
+  );
+}
+
+// Simple Parts Inventory View Component
+function PartsInventoryView({ deviceModel, repairType }: { deviceModel: string; repairType: string }) {
+  const { data: inventoryItems = [] } = useQuery({
+    queryKey: ["/api/inventory"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory");
+      if (!response.ok) throw new Error("Failed to fetch inventory");
+      return response.json();
+    },
+  });
+
+  const relevantParts = inventoryItems.filter((item: any) => {
+    const matchesDevice = deviceModel ? 
+      item.compatibleDevices?.toLowerCase().includes(deviceModel.toLowerCase()) : true;
+    const matchesRepair = repairType ? 
+      item.partType.toLowerCase().includes(repairType.toLowerCase()) : true;
+    return matchesDevice || matchesRepair;
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-business-neutral">
+        {deviceModel && <span>Device: <strong>{deviceModel}</strong> | </span>}
+        {repairType && <span>Repair: <strong>{repairType}</strong></span>}
+      </div>
+      
+      {relevantParts.length === 0 ? (
+        <div className="text-center py-8">
+          <Package className="w-12 h-12 mx-auto text-business-neutral mb-4" />
+          <p className="text-business-neutral">No matching parts found in inventory</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {relevantParts.map((item: any) => (
+            <div key={item.id} className="border rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">{item.partName}</h4>
+                <Badge variant={item.quantity < 5 ? "destructive" : "default"}>
+                  {item.quantity} in stock
+                </Badge>
+              </div>
+              <p className="text-sm text-business-neutral">{item.partType}</p>
+              {item.compatibleDevices && (
+                <p className="text-xs text-business-neutral">Compatible: {item.compatibleDevices}</p>
+              )}
+              <div className="flex justify-between text-sm">
+                <span>Cost: ₹{item.cost}</span>
+                <span className="font-medium">Selling: ₹{item.sellingPrice}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
