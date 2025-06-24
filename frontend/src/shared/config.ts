@@ -25,8 +25,8 @@ const getApiBaseUrl = () => {
     return 'http://localhost:5000/api';
   }
   
-  // Production - using the exact deployed backend URL
-  return 'https://mobileedrf-509mbr4dj-ritheshs-projects-2bddf162.vercel.app/api';
+  // Production - using the same domain for API calls
+  return '/api';
 };
 
 // Determine the appropriate Socket.IO URL
@@ -41,8 +41,8 @@ const getSocketUrl = () => {
     return 'http://localhost:5000';
   }
   
-  // Production - using the exact deployed backend URL
-  return 'https://mobileedrf-509mbr4dj-ritheshs-projects-2bddf162.vercel.app';
+  // Production - using the same domain for WebSocket
+  return window.location.origin;
 };
 
 export const config = {

@@ -1,12 +1,13 @@
 {
-  "name": "mobile-repair-tracker-client",
+  "name": "mobile-repair-tracker",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "cd frontend && npm run build",
     "preview": "vite preview",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder",
+    "vercel-build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
