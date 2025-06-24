@@ -1,0 +1,121 @@
+
+/* Mobile-specific styles for Repair Tracker */
+@media (max-width: 768px) {
+  .mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+  }
+  
+  .mobile-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    height: 100vh;
+    background: var(--background);
+    transition: left 0.3s ease;
+    z-index: 1001;
+    padding: 1rem;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .mobile-menu.open {
+    left: 0;
+  }
+  
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .mobile-content {
+    margin-top: 60px;
+    padding: 1rem;
+  }
+  
+  .mobile-card {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .mobile-button {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .mobile-table {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .mobile-table table {
+    min-width: 600px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-button {
+    min-height: 44px;
+  }
+  
+  .mobile-input {
+    min-height: 44px;
+  }
+  
+  .mobile-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Dark mode support for mobile */
+@media (prefers-color-scheme: dark) {
+  .mobile-card {
+    background: var(--card-dark);
+    color: var(--foreground-dark);
+  }
+}
