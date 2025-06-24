@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Transaction } from "@shared/schema";
+import type { Transaction } from "../shared/schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

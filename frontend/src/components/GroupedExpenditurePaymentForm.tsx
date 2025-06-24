@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Save, X, DollarSign } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { GroupedExpenditure } from "@shared/schema";
+import type { GroupedExpenditure } from "../shared/schema";
 
 interface GroupedExpenditurePaymentFormData {
   amount: number;

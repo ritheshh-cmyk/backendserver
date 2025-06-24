@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate, formatTime, parseExternalPurchases, calculateTotalExpenses, calculateProfit } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Transaction } from "@shared/schema";
+import type { Transaction } from "../shared/schema";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface ExternalPurchase {

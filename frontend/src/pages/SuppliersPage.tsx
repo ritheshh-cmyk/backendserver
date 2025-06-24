@@ -26,7 +26,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import type { Supplier } from "@shared/schema";
+import type { Supplier } from "../shared/schema";
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@/components/ui/select";
 
 // Fetch supplier summary

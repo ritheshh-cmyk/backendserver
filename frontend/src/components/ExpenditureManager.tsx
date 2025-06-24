@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreditCard, Plus, Search, TrendingDown } from "lucide-react";
-import type { Expenditure, InsertExpenditure } from "@shared/schema";
+import type { Expenditure, InsertExpenditure } from "../shared/schema";
 
 export default function ExpenditureManager() {
   const { t } = useLanguage();
@@ -122,7 +122,7 @@ export default function ExpenditureManager() {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
                   placeholder="What was this expense for?"
                   rows={2}
                   required
@@ -140,7 +140,7 @@ export default function ExpenditureManager() {
                     min="0"
                     className="pl-8"
                     value={formData.amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                     required
                   />
                 </div>
@@ -150,7 +150,7 @@ export default function ExpenditureManager() {
                 <Label htmlFor="category">{t('category')} *</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  onValueChange={(value) => setFormData((prev: any) => ({ ...prev, category: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -169,7 +169,7 @@ export default function ExpenditureManager() {
                 <Label htmlFor="paymentMethod">{t('paymentMethod')} *</Label>
                 <Select
                   value={formData.paymentMethod}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}
+                  onValueChange={(value) => setFormData((prev: any) => ({ ...prev, paymentMethod: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
@@ -189,7 +189,7 @@ export default function ExpenditureManager() {
                 <Input
                   id="recipient"
                   value={formData.recipient || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, recipient: e.target.value }))}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, recipient: e.target.value }))}
                   placeholder="Who received the payment?"
                 />
               </div>

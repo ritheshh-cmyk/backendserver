@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, Plus, Search, ShoppingCart } from "lucide-react";
-import type { InventoryItem, InsertInventoryItem } from "@shared/schema";
+import type { InventoryItem, InsertInventoryItem } from "../shared/schema";
 
 export default function InventoryManager() {
   const { t } = useLanguage();

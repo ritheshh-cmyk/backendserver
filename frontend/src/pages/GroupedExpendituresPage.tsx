@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { GroupedExpenditure, GroupedExpenditurePayment } from "@shared/schema";
+import type { GroupedExpenditure, GroupedExpenditurePayment } from "../shared/schema";
 import GroupedExpenditureForm from "@/components/GroupedExpenditureForm";
 import GroupedExpenditurePaymentForm from "@/components/GroupedExpenditurePaymentForm";
 

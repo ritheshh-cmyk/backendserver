@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, Download, Store, Package, DollarSign, TrendingUp, CreditCard, Calendar, User, Smartphone, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate, formatTime, parseExternalPurchases } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Transaction, Expenditure } from "@shared/schema";
+import type { Transaction, Expenditure } from "../shared/schema";
 import ExpenditureForm from "@/components/ExpenditureForm";
 import SupplierExpenditureManager from "@/components/SupplierExpenditureManager";
 

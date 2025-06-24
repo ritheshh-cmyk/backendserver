@@ -4,7 +4,7 @@ import { formatCurrency, formatDateTime } from "@/lib/utils";
 import StatsCard from "./StatsCard";
 import StatsGrid from "./StatsGrid";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Transaction } from "@shared/schema";
+import type { Transaction } from "../shared/schema";
 
 interface TransactionSummaryProps {
   currentTransaction?: {
