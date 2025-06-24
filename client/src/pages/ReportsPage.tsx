@@ -1,764 +1,461 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Sidebar from "@/components/Sidebar";
-import MobileHeader from "@/components/MobileHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Calendar, 
-  Download, 
   TrendingUp, 
+  TrendingDown, 
   DollarSign, 
   Users, 
   Package,
-  ShoppingCart,
-  CreditCard,
+  Download, 
+  Calendar,
   BarChart3,
   PieChart,
-  FileText
+  FileText,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
+
+interface SupplierData {
+  transactions: number;
+  spent: number;
+  revenue: number;
+  profit: number;
+}
+
+interface TopCustomerData {
+  customer: string;
+  total: number;
+  transactions: number;
+}
 
 export default function ReportsPage() {
-  const [dateFilter, setDateFilter] = useState("month");
-  const [reportType, setReportType] = useState("overview");
-  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [dateRange, setDateRange] = useState("month");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch comprehensive stats
-  const { data: todayStats } = useQuery({
-    queryKey: ["/api/stats/today"],
-  });
-
-  const { data: weekStats } = useQuery({
-    queryKey: ["/api/stats/week"],
-  });
-
-  const { data: monthStats } = useQuery({
-    queryKey: ["/api/stats/month"],
-  });
-
-  const { data: yearStats } = useQuery({
-    queryKey: ["/api/stats/year"],
-  });
-
-  // Fetch transactions for analysis
-  const { data: transactions = [] } = useQuery({
-    queryKey: ["/api/transactions", { dateRange: dateFilter }],
+  // Fetch transactions data
+  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useQuery({
+    queryKey: ["/api/transactions"],
     queryFn: async () => {
-      const response = await fetch(`/api/transactions?dateRange=${dateFilter}&limit=1000`);
+      const response = await fetch("/api/transactions");
       if (!response.ok) throw new Error("Failed to fetch transactions");
       return response.json();
     },
   });
 
-  // Fetch expenditures
-  const { data: expenditures = [] } = useQuery({
-    queryKey: ["/api/expenditures", { dateRange: dateFilter }],
+  // Fetch expenditures data
+  const { data: expenditures = [], isLoading: expendituresLoading, error: expendituresError } = useQuery({
+    queryKey: ["/api/expenditures"],
     queryFn: async () => {
-      const response = await fetch(`/api/expenditures?dateRange=${dateFilter}`);
+      const response = await fetch("/api/expenditures");
       if (!response.ok) throw new Error("Failed to fetch expenditures");
       return response.json();
     },
   });
 
-  // Fetch suppliers data
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["/api/suppliers"],
-  });
-
-  // Calculate comprehensive metrics
-  const metrics = {
-    totalRevenue: transactions.reduce((sum, t) => sum + parseFloat(t.repairCost), 0),
-    totalProfit: transactions.reduce((sum, t) => sum + (parseFloat(t.profit) || 0), 0),
-    totalExpenses: expenditures.reduce((sum, e) => sum + parseFloat(e.amount), 0),
-    totalTransactions: transactions.length,
-    avgTransactionValue: transactions.length > 0 ? 
-      transactions.reduce((sum, t) => sum + parseFloat(t.repairCost), 0) / transactions.length : 0,
-    profitMargin: transactions.length > 0 ? 
-      (transactions.reduce((sum, t) => sum + (parseFloat(t.profit) || 0), 0) / 
-       transactions.reduce((sum, t) => sum + parseFloat(t.repairCost), 0)) * 100 : 0
+  // Calculate date range
+  const getDateRange = () => {
+    const now = new Date();
+    const start = new Date();
+    
+    switch (dateRange) {
+      case "today":
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "week":
+        start.setDate(now.getDate() - 7);
+        break;
+      case "month":
+        start.setMonth(now.getMonth() - 1);
+        break;
+      case "year":
+        start.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        start.setMonth(now.getMonth() - 1);
+    }
+    
+    return { start, end: now };
   };
 
+  // Filter data by date range
+  const { start, end } = getDateRange();
+  const filteredTransactions = transactions.filter((t: any) => {
+    const date = new Date(t.createdAt);
+    return date >= start && date <= end;
+  });
+
+  const filteredExpenditures = expenditures.filter((e: any) => {
+    const date = new Date(e.createdAt);
+    return date >= start && date <= end;
+  });
+
+  // Calculate statistics
+  const totalRevenue = filteredTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.repairCost), 0);
+  const totalExpenditure = filteredExpenditures.reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0);
+  const totalProfit = totalRevenue - totalExpenditure;
+  const totalTransactions = filteredTransactions.length;
+  const uniqueCustomers = new Set(filteredTransactions.map((t: any) => t.mobileNumber)).size;
+
+  // Calculate profit margin
+  const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+  // Top customers analysis
+  const customerAnalysis = filteredTransactions.reduce((acc: Record<string, TopCustomerData>, t: any) => {
+    const customer = t.customerName;
+    if (!acc[customer]) {
+      acc[customer] = { customer, total: 0, transactions: 0 };
+    }
+    acc[customer].total += parseFloat(t.repairCost);
+    acc[customer].transactions += 1;
+    return acc;
+  }, {});
+
+  const topCustomers = Object.values(customerAnalysis) as TopCustomerData[];
+  topCustomers.sort((a: TopCustomerData, b: TopCustomerData) => b.total - a.total);
+  const top5Customers = topCustomers.slice(0, 5);
+
   // Supplier analysis
-  const supplierAnalysis = transactions
-    .filter(t => t.requiresInventory && t.supplierName)
-    .reduce((acc, t) => {
-      const supplier = t.supplierName;
-      if (!acc[supplier]) {
-        acc[supplier] = { transactions: 0, spent: 0, revenue: 0, profit: 0 };
+  const supplierAnalysis: Record<string, SupplierData> = {};
+  
+  filteredExpenditures.forEach((exp: any) => {
+    const supplier = exp.recipient;
+    if (supplier) {
+      if (!supplierAnalysis[supplier]) {
+        supplierAnalysis[supplier] = { transactions: 0, spent: 0, revenue: 0, profit: 0 };
+    }
+      supplierAnalysis[supplier].spent += parseFloat(exp.amount);
+    }
+  });
+
+  // Add revenue from transactions that used external purchases
+  filteredTransactions.forEach((t: any) => {
+    if (t.requiresInventory && t.partsCost) {
+      try {
+        const parts = JSON.parse(t.partsCost);
+        if (Array.isArray(parts)) {
+          parts.forEach((part: any) => {
+            const supplier = part.customStore || part.store;
+            if (supplier && supplierAnalysis[supplier]) {
+              supplierAnalysis[supplier].revenue += parseFloat(t.repairCost);
+              supplierAnalysis[supplier].transactions += 1;
+              supplierAnalysis[supplier].profit += parseFloat(t.repairCost) - (part.cost || 0);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing parts cost:", error);
       }
-      acc[supplier].transactions++;
-      acc[supplier].spent += parseFloat(t.actualCost || 0);
-      acc[supplier].revenue += parseFloat(t.repairCost);
-      acc[supplier].profit += parseFloat(t.profit || 0);
-      return acc;
-    }, {});
-
-  // Payment method analysis
-  const paymentAnalysis = transactions.reduce((acc, t) => {
-    const method = t.paymentMethod;
-    if (!acc[method]) {
-      acc[method] = { count: 0, amount: 0 };
     }
-    acc[method].count++;
-    acc[method].amount += parseFloat(t.repairCost);
-    return acc;
-  }, {});
+  });
 
-  // Device type analysis
-  const deviceAnalysis = transactions.reduce((acc, t) => {
-    const device = t.deviceModel;
-    if (!acc[device]) {
-      acc[device] = { count: 0, revenue: 0, profit: 0 };
-    }
-    acc[device].count++;
-    acc[device].revenue += parseFloat(t.repairCost);
-    acc[device].profit += parseFloat(t.profit || 0);
-    return acc;
-  }, {});
-
-  const exportReport = async () => {
+  // Export functionality
+  const exportToExcel = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/reports/export?type=${reportType}&dateRange=${dateFilter}`);
+      const response = await fetch("/api/export/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dateRange,
+          transactions: filteredTransactions,
+          expenditures: filteredExpenditures,
+          supplierAnalysis,
+          customerAnalysis: Object.values(customerAnalysis)
+        }),
+      });
+
       if (!response.ok) throw new Error("Export failed");
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${reportType}-report-${dateFilter}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = `reports-${dateRange}-${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
+      toast({
+        title: "Export Successful",
+        description: "Reports exported to Excel successfully!",
+      });
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Export error:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export reports. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Error handling
+  useEffect(() => {
+    if (transactionsError || expendituresError) {
+      setError("Failed to load data. Please refresh the page.");
+    } else {
+      setError(null);
+    }
+  }, [transactionsError, expendituresError]);
+
+  if (transactionsLoading || expendituresLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-600" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 lg:ml-64">
-        <MobileHeader />
-        
-        <main className="p-4 lg:p-6 pt-16 lg:pt-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4 space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Business Reports</h1>
-                <p className="text-business-neutral">Comprehensive business analytics and insights</p>
+            <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
+            <p className="text-muted-foreground">Comprehensive business insights and performance metrics</p>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="w-32">
+          <div className="flex items-center gap-2">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
-                    <SelectItem value="year">This Year</SelectItem>
+                <SelectItem value="week">Last 7 Days</SelectItem>
+                <SelectItem value="month">Last Month</SelectItem>
+                <SelectItem value="year">Last Year</SelectItem>
                   </SelectContent>
                 </Select>
-                
-                <Button onClick={exportReport} className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Export Report
+            <Button onClick={exportToExcel} disabled={isLoading} className="transition-all duration-200 hover:scale-105">
+              {isLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Export
                 </Button>
               </div>
             </div>
 
-            {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="transition-all duration-200 hover:shadow-lg hover:scale-105">
+            <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-business-neutral">Total Revenue</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {formatCurrency(metrics.totalRevenue)}
-                      </p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold text-foreground">₹{totalRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
                     </div>
-                    <DollarSign className="w-8 h-8 text-green-600" />
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardContent className="p-4">
+          <Card className="transition-all duration-200 hover:shadow-lg hover:scale-105">
+            <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-business-neutral">Total Profit</p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {formatCurrency(metrics.totalProfit)}
+                  <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
+                  <p className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ₹{totalProfit.toFixed(2)}
                       </p>
-                      <p className="text-xs text-business-neutral">
-                        {metrics.profitMargin.toFixed(1)}% margin
+                  <p className="text-xs text-muted-foreground">
+                    {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}% margin
                       </p>
                     </div>
-                    <TrendingUp className="w-8 h-8 text-blue-600" />
+                <div className={`p-2 rounded-lg ${totalProfit >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'}`}>
+                  {totalProfit >= 0 ? (
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <TrendingDown className="w-6 h-6 text-red-600" />
+                  )}
+                </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardContent className="p-4">
+          <Card className="transition-all duration-200 hover:shadow-lg hover:scale-105">
+            <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-business-neutral">Transactions</p>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {metrics.totalTransactions}
-                      </p>
-                      <p className="text-xs text-business-neutral">
-                        Avg: {formatCurrency(metrics.avgTransactionValue)}
-                      </p>
+                  <p className="text-sm font-medium text-muted-foreground">Transactions</p>
+                  <p className="text-2xl font-bold text-foreground">{totalTransactions}</p>
+                </div>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <FileText className="w-6 h-6 text-blue-600" />
                     </div>
-                    <BarChart3 className="w-8 h-8 text-purple-600" />
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
-                <CardContent className="p-4">
+          <Card className="transition-all duration-200 hover:shadow-lg hover:scale-105">
+            <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-business-neutral">Expenses</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {formatCurrency(metrics.totalExpenses)}
-                      </p>
+                  <p className="text-sm font-medium text-muted-foreground">Unique Customers</p>
+                  <p className="text-2xl font-bold text-foreground">{uniqueCustomers}</p>
+                </div>
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <Users className="w-6 h-6 text-purple-600" />
                     </div>
-                    <CreditCard className="w-8 h-8 text-red-600" />
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Detailed Reports Tabs */}
-            <Tabs value={reportType} onValueChange={setReportType}>
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="pl">P&L Statement</TabsTrigger>
-                <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-                <TabsTrigger value="devices">Devices</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="profit">Profit Analysis</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
+        {/* Detailed Analysis */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Performance Comparison */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Performance Comparison</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span>Today</span>
-                          <span className="font-medium">{formatCurrency(todayStats?.totalRevenue || 0)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span>This Week</span>
-                          <span className="font-medium">{formatCurrency(weekStats?.totalRevenue || 0)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span>This Month</span>
-                          <span className="font-medium">{formatCurrency(monthStats?.totalRevenue || 0)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span>This Year</span>
-                          <span className="font-medium">{formatCurrency(yearStats?.totalRevenue || 0)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Top Performing Days */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {transactions.slice(0, 5).map((transaction) => (
-                          <div key={transaction.id} className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{transaction.customerName}</p>
-                              <p className="text-sm text-business-neutral">
-                                {transaction.deviceModel} - {transaction.repairType}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">{formatCurrency(transaction.repairCost)}</p>
-                              {transaction.requiresInventory && (
-                                <p className="text-xs text-green-600">
-                                  Profit: {formatCurrency(transaction.profit || 0)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="pl" className="space-y-6">
-                <Card>
+          {/* Supplier Analysis */}
+          <Card className="transition-all duration-200 hover:shadow-lg">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      Profit & Loss Statement
+                <Package className="w-5 h-5" />
+                Supplier Analysis
                     </CardTitle>
-                    <p className="text-sm text-business-neutral">
-                      Period: {dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1)} | 
-                      Generated on {formatDate(new Date())}
-                    </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-8">
-                      
-                      {/* Revenue Section */}
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">REVENUE</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span>Repair Services Revenue</span>
-                              <span className="font-medium">{formatCurrency(metrics.totalRevenue)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="ml-4">• Cash Payments</span>
-                              <span>{formatCurrency(paymentAnalysis.cash?.amount || 0)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="ml-4">• Online Payments</span>
-                              <span>{formatCurrency(paymentAnalysis.online?.amount || 0)}</span>
-                            </div>
-                            <div className="flex justify-between font-semibold text-green-600 border-t pt-2">
-                              <span>TOTAL REVENUE</span>
-                              <span>{formatCurrency(metrics.totalRevenue)}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 dark:text-green-200 mb-3">Revenue Breakdown</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Average Transaction</span>
-                                <span>{formatCurrency(metrics.avgTransactionValue)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Total Transactions</span>
-                                <span>{metrics.totalTransactions}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>With Inventory</span>
-                                <span>{transactions.filter(t => t.requiresInventory).length}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cost of Goods Sold */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">COST OF GOODS SOLD</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            {Object.entries(supplierAnalysis).map(([supplier, data]) => (
-                              <div key={supplier} className="flex justify-between">
-                                <span>Parts from {supplier}</span>
-                                <span className="text-red-600">{formatCurrency(data.spent)}</span>
-                              </div>
-                            ))}
-                            <div className="flex justify-between font-semibold text-red-600 border-t pt-2">
-                              <span>TOTAL COGS</span>
-                              <span>{formatCurrency(transactions.reduce((sum, t) => sum + parseFloat(t.actualCost || 0), 0))}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                            <h4 className="font-medium text-red-800 dark:text-red-200 mb-3">Cost Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>COGS as % of Revenue</span>
-                                <span>
-                                  {metrics.totalRevenue > 0 ? 
-                                    ((transactions.reduce((sum, t) => sum + parseFloat(t.actualCost || 0), 0) / metrics.totalRevenue) * 100).toFixed(1) 
-                                    : 0}%
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Avg Cost per Transaction</span>
-                                <span>
-                                  {formatCurrency(metrics.totalTransactions > 0 ? 
-                                    transactions.reduce((sum, t) => sum + parseFloat(t.actualCost || 0), 0) / metrics.totalTransactions 
-                                    : 0)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Gross Profit */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">GROSS PROFIT</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span>Total Revenue</span>
-                              <span className="text-green-600">{formatCurrency(metrics.totalRevenue)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Less: Cost of Goods Sold</span>
-                              <span className="text-red-600">({formatCurrency(transactions.reduce((sum, t) => sum + parseFloat(t.actualCost || 0), 0))})</span>
-                            </div>
-                            <div className="flex justify-between font-bold text-blue-600 text-lg border-t pt-2">
-                              <span>GROSS PROFIT</span>
-                              <span>{formatCurrency(metrics.totalProfit)}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-3">Gross Profit Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Gross Profit Margin</span>
-                                <span className="font-medium">{metrics.profitMargin.toFixed(1)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Profit per Transaction</span>
-                                <span>{formatCurrency(metrics.totalTransactions > 0 ? metrics.totalProfit / metrics.totalTransactions : 0)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Operating Expenses */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">OPERATING EXPENSES</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            {expenditures.reduce((acc, exp) => {
-                              if (!acc[exp.category]) acc[exp.category] = 0;
-                              acc[exp.category] += parseFloat(exp.amount);
-                              return acc;
-                            }, {}) && Object.entries(expenditures.reduce((acc, exp) => {
-                              if (!acc[exp.category]) acc[exp.category] = 0;
-                              acc[exp.category] += parseFloat(exp.amount);
-                              return acc;
-                            }, {})).map(([category, amount]) => (
-                              <div key={category} className="flex justify-between">
-                                <span className="capitalize">{category}</span>
-                                <span className="text-red-600">{formatCurrency(amount)}</span>
-                              </div>
-                            ))}
-                            <div className="flex justify-between font-semibold text-red-600 border-t pt-2">
-                              <span>TOTAL OPERATING EXPENSES</span>
-                              <span>{formatCurrency(metrics.totalExpenses)}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                            <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-3">Expense Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Expenses as % of Revenue</span>
-                                <span>
-                                  {metrics.totalRevenue > 0 ? 
-                                    ((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1) 
-                                    : 0}%
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Total Expense Items</span>
-                                <span>{expenditures.length}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Net Profit */}
-                      <div className="space-y-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-bold text-foreground border-b pb-2">NET PROFIT & LOSS</h3>
-                        <div className="space-y-4">
-                          <div className="flex justify-between text-lg">
-                            <span>Gross Profit</span>
-                            <span className="text-blue-600 font-medium">{formatCurrency(metrics.totalProfit)}</span>
-                          </div>
-                          <div className="flex justify-between text-lg">
-                            <span>Less: Operating Expenses</span>
-                            <span className="text-red-600 font-medium">({formatCurrency(metrics.totalExpenses)})</span>
-                          </div>
-                          <div className="flex justify-between text-2xl font-bold border-t pt-4">
-                            <span>NET PROFIT</span>
-                            <span className={`${(metrics.totalProfit - metrics.totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(metrics.totalProfit - metrics.totalExpenses)}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
-                            <div>
-                              <span className="text-business-neutral">Net Profit Margin</span>
-                              <p className="font-medium">
-                                {metrics.totalRevenue > 0 ? 
-                                  (((metrics.totalProfit - metrics.totalExpenses) / metrics.totalRevenue) * 100).toFixed(1) 
-                                  : 0}%
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-business-neutral">Return on Revenue</span>
-                              <p className="font-medium">
-                                {metrics.totalRevenue > 0 ? 
-                                  (((metrics.totalProfit - metrics.totalExpenses) / metrics.totalRevenue) * 100).toFixed(2) 
-                                  : 0}%
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Financial Ratios & KPIs */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-2">KEY PERFORMANCE INDICATORS</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center p-4 border rounded-lg">
-                            <p className="text-2xl font-bold text-blue-600">{metrics.profitMargin.toFixed(1)}%</p>
-                            <p className="text-sm text-business-neutral">Gross Margin</p>
-                          </div>
-                          <div className="text-center p-4 border rounded-lg">
-                            <p className="text-2xl font-bold text-green-600">
-                              {metrics.totalRevenue > 0 ? 
-                                (((metrics.totalProfit - metrics.totalExpenses) / metrics.totalRevenue) * 100).toFixed(1) 
-                                : 0}%
-                            </p>
-                            <p className="text-sm text-business-neutral">Net Margin</p>
-                          </div>
-                          <div className="text-center p-4 border rounded-lg">
-                            <p className="text-2xl font-bold text-purple-600">{formatCurrency(metrics.avgTransactionValue)}</p>
-                            <p className="text-sm text-business-neutral">Avg Transaction</p>
-                          </div>
-                          <div className="text-center p-4 border rounded-lg">
-                            <p className="text-2xl font-bold text-orange-600">
-                              {metrics.totalRevenue > 0 ? 
-                                ((metrics.totalExpenses / metrics.totalRevenue) * 100).toFixed(1) 
-                                : 0}%
-                            </p>
-                            <p className="text-sm text-business-neutral">Expense Ratio</p>
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="suppliers">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Supplier Performance Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Supplier</TableHead>
                           <TableHead>Transactions</TableHead>
-                          <TableHead>Amount Spent</TableHead>
-                          <TableHead>Revenue Generated</TableHead>
-                          <TableHead>Profit Earned</TableHead>
-                          <TableHead>ROI</TableHead>
+                      <TableHead>Spent</TableHead>
+                      <TableHead>Revenue</TableHead>
+                      <TableHead>Profit</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {Object.entries(supplierAnalysis).map(([supplier, data]) => (
-                          <TableRow key={supplier}>
+                      <TableRow key={supplier} className="hover:bg-muted/50 transition-colors">
                             <TableCell className="font-medium">{supplier}</TableCell>
                             <TableCell>{data.transactions}</TableCell>
-                            <TableCell>{formatCurrency(data.spent)}</TableCell>
-                            <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                            <TableCell className="text-green-600">{formatCurrency(data.profit)}</TableCell>
-                            <TableCell>
-                              <Badge variant={data.spent > 0 ? (data.profit / data.spent > 1 ? "default" : "secondary") : "outline"}>
-                                {data.spent > 0 ? `${((data.profit / data.spent) * 100).toFixed(1)}%` : "N/A"}
-                              </Badge>
+                        <TableCell>₹{data.spent.toFixed(2)}</TableCell>
+                        <TableCell>₹{data.revenue.toFixed(2)}</TableCell>
+                        <TableCell className={data.profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          ₹{data.profit.toFixed(2)}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
+              </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
 
-              <TabsContent value="devices">
-                <Card>
+          {/* Top Customers */}
+          <Card className="transition-all duration-200 hover:shadow-lg">
                   <CardHeader>
-                    <CardTitle>Device & Repair Analysis</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Top Customers
+              </CardTitle>
                   </CardHeader>
                   <CardContent>
+              <div className="space-y-4">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Device Model</TableHead>
-                          <TableHead>Repairs</TableHead>
-                          <TableHead>Revenue</TableHead>
-                          <TableHead>Avg Revenue</TableHead>
-                          <TableHead>Total Profit</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Transactions</TableHead>
+                      <TableHead>Total Spent</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {Object.entries(deviceAnalysis)
-                          .sort(([,a], [,b]) => b.revenue - a.revenue)
-                          .map(([device, data]) => (
-                          <TableRow key={device}>
-                            <TableCell className="font-medium">{device}</TableCell>
-                            <TableCell>{data.count}</TableCell>
-                            <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                            <TableCell>{formatCurrency(data.revenue / data.count)}</TableCell>
-                            <TableCell className="text-green-600">{formatCurrency(data.profit)}</TableCell>
+                    {top5Customers.map((customer) => (
+                      <TableRow key={customer.customer} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{customer.customer}</TableCell>
+                        <TableCell>{customer.transactions}</TableCell>
+                        <TableCell>₹{customer.total.toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payments">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Method Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {Object.entries(paymentAnalysis).map(([method, data]) => (
-                        <div key={method} className="p-4 border rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium capitalize">{method}</h4>
-                            <CreditCard className="w-5 h-5 text-business-neutral" />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-business-neutral">Transactions:</span>
-                              <span className="font-medium">{data.count}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-business-neutral">Total Amount:</span>
-                              <span className="font-medium">{formatCurrency(data.amount)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-business-neutral">Avg Amount:</span>
-                              <span className="font-medium">{formatCurrency(data.amount / data.count)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
+        </div>
 
-              <TabsContent value="profit">
-                <Card>
+        {/* P&L Statement */}
+        <Card className="transition-all duration-200 hover:shadow-lg">
                   <CardHeader>
-                    <CardTitle>Profit Analysis & Cost Breakdown</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Profit & Loss Statement
+            </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
+            <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <h4 className="font-medium text-green-800 dark:text-green-200">Total Profit</h4>
-                          <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics.totalProfit)}</p>
+                  <h4 className="font-semibold text-green-800 dark:text-green-200">Revenue</h4>
+                  <p className="text-2xl font-bold text-green-600">₹{totalRevenue.toFixed(2)}</p>
                         </div>
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <h4 className="font-medium text-blue-800 dark:text-blue-200">Profit Margin</h4>
-                          <p className="text-2xl font-bold text-blue-600">{metrics.profitMargin.toFixed(1)}%</p>
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <h4 className="font-semibold text-red-800 dark:text-red-200">Expenses</h4>
+                  <p className="text-2xl font-bold text-red-600">₹{totalExpenditure.toFixed(2)}</p>
                         </div>
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                          <h4 className="font-medium text-orange-800 dark:text-orange-200">Avg Profit/Transaction</h4>
-                          <p className="text-2xl font-bold text-orange-600">
-                            {formatCurrency(metrics.totalTransactions > 0 ? metrics.totalProfit / metrics.totalTransactions : 0)}
+                <div className={`p-4 rounded-lg ${totalProfit >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                  <h4 className={`font-semibold ${totalProfit >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                    Net Profit
+                  </h4>
+                  <p className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ₹{totalProfit.toFixed(2)}
                           </p>
                         </div>
                       </div>
 
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Device</TableHead>
-                            <TableHead>Revenue</TableHead>
-                            <TableHead>Cost</TableHead>
-                            <TableHead>Profit</TableHead>
-                            <TableHead>Margin</TableHead>
-                            <TableHead>Supplier</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {transactions
-                            .filter(t => t.requiresInventory)
-                            .map((transaction) => {
-                              const revenue = parseFloat(transaction.repairCost);
-                              const cost = parseFloat(transaction.actualCost || 0);
-                              const profit = parseFloat(transaction.profit || 0);
-                              const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
-                              
-                              return (
-                                <TableRow key={transaction.id}>
-                                  <TableCell>{transaction.customerName}</TableCell>
-                                  <TableCell>{transaction.deviceModel}</TableCell>
-                                  <TableCell>{formatCurrency(revenue)}</TableCell>
-                                  <TableCell className="text-red-600">{formatCurrency(cost)}</TableCell>
-                                  <TableCell className="text-green-600 font-medium">{formatCurrency(profit)}</TableCell>
-                                  <TableCell>
-                                    <Badge variant={margin > 50 ? "default" : margin > 25 ? "secondary" : "destructive"}>
-                                      {margin.toFixed(1)}%
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>{transaction.supplierName || "-"}</TableCell>
-                                </TableRow>
-                              );
-                            })}
-                        </TableBody>
-                      </Table>
+              <div className="mt-6">
+                <h4 className="font-semibold mb-2">Profit Margin Analysis</h4>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-500 ${
+                      profitMargin >= 0 ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(Math.abs(profitMargin), 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Profit Margin: {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}%
+                </p>
+              </div>
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
       </div>
     </div>
   );

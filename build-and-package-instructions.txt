@@ -1,0 +1,11 @@
+Instructions to build and package the Electron app into an exe:
+
+1. Build the React app using Vite:
+   npm run build
+
+2. Package the Electron app into an exe using electron-builder:
+   npm run electron:build
+
+This will first build the React app into the "dist/public" directory, then package the Electron app including the built React app and main process script into an installer exe for Windows.
+
+If you encounter any errors during the build or packaging process, please share the error messages so I can assist in fixing them.

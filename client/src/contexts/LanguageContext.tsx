@@ -11,7 +11,7 @@ interface LanguageContextType {
 const translations = {
   en: {
     // App Title
-    appTitle: 'PhoneRepair Pro',
+    appTitle: 'call me mobiles',
     businessManagement: 'Business Management',
     
     // Navigation
@@ -21,6 +21,14 @@ const translations = {
     reports: 'Reports',
     exportToExcel: 'Export to Excel',
     export: 'Export',
+    dashboard: 'Dashboard',
+    settings: 'Settings',
+    inventory: 'Inventory',
+    expenditure: 'Expenditure',
+    history: 'History',
+    
+    // Navigation Groups
+    mainOperations: 'Main Operations',
     
     // Dashboard
     recordTransaction: 'Record customer repair service and payment details',
@@ -113,8 +121,6 @@ const translations = {
     exportDataFailed: 'Failed to export data',
 
     // New Features
-    inventory: 'Inventory',
-    expenditure: 'Expenditure',
     suppliers: 'Suppliers',
     needsParts: 'Needs Parts',
     addInventoryItem: 'Add Inventory Item',
@@ -146,7 +152,6 @@ const translations = {
     viewAllTransactions: 'View All Transactions',
     actualCost: 'Actual Cost',
     profit: 'Profit',
-    supplierName: 'Supplier Name',
     costBreakdown: 'Cost Breakdown',
     hiddenDetails: 'Hidden Details',
     customerPaid: 'Customer Paid',
@@ -166,7 +171,6 @@ const translations = {
     quickAddCommonExpenses: 'Quick Add Common Expenses',
     yourProfit: 'Your Profit',
     spentAt: 'Spent at',
-    reports: 'Reports',
     broughtItemsFromOtherStore: 'Brought items from other store',
     checkIfPurchasedParts: 'Check if you purchased parts from Patels, Mahalaxmi, Rathod, Sri, Ramdev, Hub etc.',
     externalStorePurchase: 'External Store Purchase',
@@ -174,11 +178,46 @@ const translations = {
     whichStore: 'Which Store?',
     chooseStoreOutlet: 'Choose the store outlet',
     howMuchSpent: 'How much spent',
-    quickAddCommonStoreExpenses: 'Quick Add Common Store Expenses'
+    quickAddCommonStoreExpenses: 'Quick Add Common Store Expenses',
+    
+    // Settings
+    businessInformation: 'Business Information',
+    businessName: 'Business Name',
+    currency: 'Currency',
+    appearance: 'Appearance',
+    darkMode: 'Dark Mode',
+    language: 'Language',
+    systemSettings: 'System Settings',
+    autoBackup: 'Auto Backup',
+    notifications: 'Notifications',
+    dataManagement: 'Data Management',
+    exportAllData: 'Export All Data',
+    importData: 'Import Data',
+    clearAllData: 'Clear All Data',
+    resetToDefault: 'Reset to Default',
+    saveSettings: 'Save Settings',
+    settingsSaved: 'Settings Saved',
+    settingsReset: 'Settings Reset',
+    
+    // Function Buttons
+    search: 'Search',
+    calculator: 'Calculator',
+    notes: 'Notes',
+    customerManagement: 'Customer Management',
+    paymentManagement: 'Payment Management',
+    alerts: 'Alerts',
+    backup: 'Backup',
+    help: 'Help',
+    quickFunctions: 'Quick Functions',
+    
+    // Additional Navigation
+    invoices: 'Invoices',
+    schedule: 'Schedule',
+    analytics: 'Analytics'
   },
   te: {
     // App Title
-    appTitle: 'ఫోన్‌రిపేర్ ప్రో',
+    appTitle: 'కాల్ మీ మొబైల్స్',
     businessManagement: 'వ్యాపార నిర్వహణ',
     
     // Navigation
@@ -188,6 +227,14 @@ const translations = {
     reports: 'నివేదికలు',
     exportToExcel: 'ఎక్సెల్‌కు ఎగుమతి',
     export: 'ఎగుమతి',
+    dashboard: 'డాష్బోర్డ్',
+    settings: 'అమలు',
+    inventory: 'జాబితా',
+    expenditure: 'ఖర్చు',
+    history: 'చరిత్ర',
+    
+    // Navigation Groups
+    mainOperations: 'ముఖాలయాలు',
     
     // Dashboard
     recordTransaction: 'కస్టమర్ రిపేర్ సేవ మరియు చెల్లింపు వివరాలను రికార్డ్ చేయండి',
@@ -280,8 +327,6 @@ const translations = {
     exportDataFailed: 'డేటాను ఎగుమతి చేయడంలో విఫలమైంది',
 
     // New Features
-    inventory: 'జాబితా',
-    expenditure: 'ఖర్చు',
     suppliers: 'సరఫరాదారులు',
     needsParts: 'భాగాలు అవసరం',
     addInventoryItem: 'జాబితా అంశం జోడించండి',
@@ -313,7 +358,6 @@ const translations = {
     viewAllTransactions: 'అన్ని లావాదేవీలను చూడండి',
     actualCost: 'వాస్తవ ఖర్చు',
     profit: 'లాభం',
-    supplierName: 'సరఫరాదారు పేరు',
     costBreakdown: 'ఖర్చు వివరణ',
     hiddenDetails: 'దాచిన వివరాలు',
     customerPaid: 'కస్టమర్ చెల్లించినది',
@@ -333,7 +377,6 @@ const translations = {
     quickAddCommonExpenses: 'సాధారణ ఖర్చులను త్వరగా జోడించండి',
     yourProfit: 'మీ లాభం',
     spentAt: 'వద్ద ఖర్చు చేయబడింది',
-    reports: 'నివేదికలు',
     broughtItemsFromOtherStore: 'ఇతర దుకాణం నుండి వస్తువులు తెచ్చుకున్నారు',
     checkIfPurchasedParts: 'మీరు పటేల్స్, మహాలక్ష్మి, రాథోడ్, శ్రీ, రామదేవ్, హబ్ మొదలైన వాటి నుండి భాగాలను కొనుగోలు చేశారో లేదో తనిఖీ చేయండి',
     externalStorePurchase: 'బాహ్య దుకాణ కొనుగోలు',
@@ -341,17 +384,60 @@ const translations = {
     whichStore: 'ఏ దుకాణం?',
     chooseStoreOutlet: 'దుకాణ అవుట్‌లెట్‌ను ఎంచుకోండి',
     howMuchSpent: 'ఎంత ఖర్చు చేశారు',
-    quickAddCommonStoreExpenses: 'సాధారణ దుకాణ ఖర్చులను త్వరగా జోడించండి'
+    quickAddCommonStoreExpenses: 'సాధారణ దుకాణ ఖర్చులను త్వరగా జోడించండి',
+    
+    // Settings
+    businessInformation: 'వ్యాపార సమాచారం',
+    businessName: 'వ్యాపార పేరు',
+    currency: 'నివారణ',
+    appearance: 'ప్రాసెస్',
+    darkMode: 'డార్ మోడ్',
+    language: 'భాష',
+    systemSettings: 'వ్యవస్థ అమలు',
+    autoBackup: 'స్వయంచాలా బాక్పు',
+    notifications: 'అమలు',
+    dataManagement: 'డేటా నిర్వహణ',
+    exportAllData: 'అన్ని డేటాను ఎగుమతి',
+    importData: 'డేటాను పొందడం',
+    clearAllData: 'అన్ని డేటాను తొలిసారి',
+    resetToDefault: 'డిఫాల్ట్ గా స్థానంలోకి',
+    saveSettings: 'అమలు చేయండి',
+    settingsSaved: 'అమలు సేవ్యం',
+    settingsReset: 'అమలు తొలిసారి',
+    
+    // Function Buttons
+    search: 'శోధించండి',
+    calculator: 'కాలిక్యులేటర్',
+    notes: 'గమనాలు',
+    customerManagement: 'కస్టమర్ నిర్వహణ',
+    paymentManagement: 'చెల్లింపు నిర్వహణ',
+    alerts: 'అలర్ట్లు',
+    backup: 'బ్యాకప్',
+    help: 'సహాయం',
+    quickFunctions: 'త్వరగా ఫంక్షన్లు',
+    
+    // Additional Navigation
+    invoices: 'వివాహాలు',
+    schedule: 'పనికార్యాలు',
+    analytics: 'విశ్లేషణాలు'
   }
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    // Initialize from localStorage if available
+    const savedLanguage = localStorage.getItem('language') as Language;
+    return savedLanguage || 'en';
+  });
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'te' : 'en');
+    setLanguage(prev => {
+      const newLanguage = prev === 'en' ? 'te' : 'en';
+      localStorage.setItem('language', newLanguage);
+      return newLanguage;
+    });
   };
 
   const t = (key: string): string => {

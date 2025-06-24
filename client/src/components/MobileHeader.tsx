@@ -1,96 +1,88 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
   Menu, 
-  Download, 
-  PlusCircle, 
-  History, 
-  Users, 
-  BarChart3,
-  X,
-  Package,
-  CreditCard,
-  Store
+  X
 } from "lucide-react";
 
 interface MobileHeaderProps {
-  onExport?: () => void;
+  isSidebarOpen: boolean;
+  onToggleSidebar: () => void;
 }
 
-export default function MobileHeader({ onExport }: MobileHeaderProps) {
-  const [location] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-  const { t } = useLanguage();
+export default function MobileHeader({ isSidebarOpen, onToggleSidebar }: MobileHeaderProps) {
+  const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage } = useLanguage();
+  const [lastClickTime, setLastClickTime] = useState(0);
 
-  const navigation = [
-    { name: t('newTransaction'), href: "/", icon: PlusCircle, current: location === "/" },
-    { name: t('transactionHistory'), href: "/history", icon: History, current: location === "/history" },
-    { name: t('inventory'), href: "/inventory", icon: Package, current: location === "/inventory" },
-    { name: t('expenditure'), href: "/expenditure", icon: CreditCard, current: location === "/expenditure" },
-    { name: t('suppliers'), href: "/suppliers", icon: Store, current: location === "/suppliers" },
-    { name: t('reports'), href: "/reports", icon: BarChart3, current: location === "/reports" },
-  ];
+  const handleLogoClick = () => {
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+    
+    if (timeDiff < 300) { // Double click detected (within 300ms)
+      // Navigate to dashboard
+      window.location.href = "/";
+    }
+    
+    setLastClickTime(currentTime);
+  };
 
   return (
-    <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-2">
-                <Menu className="w-5 h-5" />
+    <header className="fixed top-0 left-0 right-0 z-30 bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b border-border lg:hidden">
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Logo */}
+        <div 
+          className="flex items-center space-x-2 cursor-pointer transition-all duration-200 hover:scale-105"
+          onClick={handleLogoClick}
+          title="Double-click to go to Dashboard"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+            CM
+          </div>
+          <div>
+            <div className="font-bold text-foreground">Call Me Mobiles</div>
+            <div className="text-xs text-muted-foreground">Expense Tracker</div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-2">
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="h-8 w-8 p-0 transition-all duration-200 hover:scale-105"
+          >
+            {theme === 'dark' ? '🌞' : '🌙'}
               </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h1 className="text-lg font-bold text-foreground">{t('appTitle')}</h1>
+
+          {/* Language Toggle */}
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="p-2"
-                  onClick={() => setIsOpen(false)}
+            onClick={toggleLanguage}
+            className="h-8 px-2 text-xs transition-all duration-200 hover:scale-105"
                 >
-                  <X className="w-4 h-4" />
+            {language === 'en' ? 'EN' : 'తె'}
                 </Button>
-              </div>
-              
-              <nav className="px-4 py-6 space-y-2">
-                {navigation.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link key={item.name} href={item.href}>
-                      <div 
-                        className={cn(
-                          "flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                          item.current
-                            ? "text-primary bg-blue-50"
-                            : "text-business-neutral hover:text-foreground hover:bg-gray-50"
-                        )}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Icon className="w-4 h-4 mr-3" />
-                        {item.name}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </SheetContent>
-          </Sheet>
-          <h1 className="text-lg font-semibold text-foreground">{t('appTitle')}</h1>
+
+          {/* Menu Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidebar}
+            className="h-8 w-8 p-0 transition-all duration-200 hover:scale-105"
+          >
+            {isSidebarOpen ? (
+              <X className="w-4 h-4" />
+            ) : (
+              <Menu className="w-4 h-4" />
+            )}
+          </Button>
         </div>
-        <Button 
-          onClick={onExport}
-          size="sm"
-          className="bg-primary text-white px-3 py-2 text-sm font-medium"
-        >
-          <Download className="w-4 h-4 mr-1" />
-          {t('export')}
-        </Button>
       </div>
     </header>
   );

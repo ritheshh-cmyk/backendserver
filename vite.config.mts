@@ -10,9 +10,7 @@ export default defineConfig({
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
+          // Remove the dynamic import if you don't need the plugin locally
         ]
       : []),
   ],
@@ -27,8 +25,21 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      external: [
+        "@radix-ui/react-tooltip",
+        "@radix-ui/react-label",
+        "@radix-ui/react-separator",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-toast",
+        "@radix-ui/react-switch",
+        "class-variance-authority"
+      ]
+    }
   },
   server: {
+    host: '0.0.0.0',
+    port: 5173,
     fs: {
       strict: true,
       deny: ["**/.*"],

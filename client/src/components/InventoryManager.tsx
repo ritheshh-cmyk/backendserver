@@ -151,7 +151,7 @@ export default function InventoryManager() {
                 <Label htmlFor="compatibleDevices">{t('compatibleDevices')}</Label>
                 <Input
                   id="compatibleDevices"
-                  value={formData.compatibleDevices}
+                  value={formData.compatibleDevices || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, compatibleDevices: e.target.value }))}
                   placeholder="iPhone 14, 14 Pro"
                 />

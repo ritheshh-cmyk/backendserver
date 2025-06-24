@@ -188,7 +188,7 @@ export default function ExpenditureManager() {
                 <Label htmlFor="recipient">{t('recipient')}</Label>
                 <Input
                   id="recipient"
-                  value={formData.recipient}
+                  value={formData.recipient || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, recipient: e.target.value }))}
                   placeholder="Who received the payment?"
                 />

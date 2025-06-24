@@ -1,5 +1,3 @@
-import Sidebar from "@/components/Sidebar";
-import MobileHeader from "@/components/MobileHeader";
 import InventoryManager from "@/components/InventoryManager";
 
 export default function InventoryPage() {
@@ -24,11 +22,7 @@ export default function InventoryPage() {
 
   return (
     <div className="min-h-screen bg-business-light dark:bg-background">
-      <MobileHeader onExport={handleExportExcel} />
-      
       <div className="flex h-screen lg:h-auto">
-        <Sidebar onExport={handleExportExcel} />
-        
         <main className="flex-1 lg:ml-0 min-h-screen bg-business-light dark:bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <InventoryManager />
