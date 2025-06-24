@@ -87,18 +87,18 @@ function AppContent() {
   // For now, use a single layout for both mobile and desktop
   return (
     <div className="min-h-screen bg-background">
-      <Switch>
-        <Route path="/" component={Dashboard} />
+    <Switch>
+      <Route path="/" component={Dashboard} />
         <Route path="/transactions" component={TransactionHistory} />
-        <Route path="/inventory" component={InventoryPage} />
-        <Route path="/suppliers" component={SuppliersPage} />
-        <Route path="/reports" component={ReportsPage} />
-        <Route path="/settings" component={SettingsPage} />
+      <Route path="/inventory" component={InventoryPage} />
+      <Route path="/suppliers" component={SuppliersPage} />
+      <Route path="/reports" component={ReportsPage} />
+      <Route path="/settings" component={SettingsPage} />
         <Route path="/expenditures" component={ExpenditurePage} />
         <Route path="/grouped-expenditures" component={GroupedExpendituresPage} />
         <Route path="/ebills" component={EBillPage} />
-        <Route component={NotFound} />
-      </Switch>
+      <Route component={NotFound} />
+    </Switch>
     </div>
   );
 }
@@ -112,10 +112,10 @@ function AuthGate() {
 function App() {
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
         <AuthGate />
-        <Toaster />
-      </QueryClientProvider>
+            <Toaster />
+    </QueryClientProvider>
     </AuthProvider>
   );
 }
