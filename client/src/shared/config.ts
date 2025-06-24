@@ -25,8 +25,8 @@ const getApiBaseUrl = () => {
     return 'http://localhost:5000/api';
   }
   
-  // Production - replace with your actual deployed backend URL
-  return 'https://your-backend-url.onrender.com/api';
+  // Production - using the exact deployed backend URL
+  return 'https://mobileedrf-509mbr4dj-ritheshs-projects-2bddf162.vercel.app/api';
 };
 
 // Determine the appropriate Socket.IO URL
@@ -41,8 +41,8 @@ const getSocketUrl = () => {
     return 'http://localhost:5000';
   }
   
-  // Production - replace with your actual deployed backend URL
-  return 'https://your-backend-url.onrender.com';
+  // Production - using the exact deployed backend URL
+  return 'https://mobileedrf-509mbr4dj-ritheshs-projects-2bddf162.vercel.app';
 };
 
 export const config = {
