@@ -1,197 +1,248 @@
 # Mobile Repair Tracker
 
-A comprehensive mobile repair business management system with real-time sync, secure authentication, and e-bill generation.
+A comprehensive mobile repair shop management system with real-time tracking, e-bill generation, SMS/WhatsApp integration, and secure authentication.
 
 ## 🚀 Features
 
-- **Customer Management**: Track customer details and repair history
-- **Transaction Processing**: Complete repair transactions with payment tracking
-- **Supplier Management**: Manage suppliers and track dues/payments
-- **Inventory Tracking**: Monitor parts and supplies
-- **E-Bill Generation**: Generate and send bills via SMS/WhatsApp
+- **Transaction Management**: Create and track repair transactions
+- **Supplier Management**: Manage suppliers and track dues
+- **Expenditure Tracking**: Monitor parts and service costs
+- **E-Bill Generation**: Generate professional bills with QR codes
+- **SMS/WhatsApp Integration**: Send notifications to customers
 - **Real-time Sync**: Live updates across all devices
-- **Secure Authentication**: JWT-based authentication with role-based access
-- **Multi-platform**: Web, Mobile (PWA), and Desktop (Electron)
+- **Secure Authentication**: JWT-based user authentication
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Multi-language Support**: English and Hindi interfaces
 
-## 📁 Project Structure
+## 🏗️ Architecture
 
-```
-mobile-repair-tracker/
-├── frontend/                 # React frontend (Vercel deployment)
-│   ├── src/
-│   ├── public/
-│   └── package.json
-├── backend/                  # Serverless backend (Vercel Functions)
-│   ├── api/                 # Vercel serverless functions
-│   ├── lib/                 # Shared utilities
-│   └── package.json
-├── shared/                  # Shared types and utilities
-└── desktop/                 # Electron desktop app
-```
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS
+- **Backend**: Node.js + Express + TypeScript
+- **Database**: PostgreSQL (Neon)
+- **Authentication**: JWT
+- **Real-time**: Socket.IO
+- **Deployment**: Vercel (Frontend + Backend)
 
-## 🛠️ Tech Stack
-
-### Frontend
-- React 18 + TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- Radix UI components
-- React Query for data fetching
-- Socket.IO for real-time updates
-
-### Backend
-- Vercel Serverless Functions
-- Neon PostgreSQL database
-- JWT authentication
-- Fast2SMS integration
-- Socket.IO for real-time sync
-
-### Desktop
-- Electron for cross-platform desktop app
-
-## 🚀 Quick Start
+## 📦 Installation & Setup
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Neon PostgreSQL database
-- Fast2SMS API key
 
-### Environment Setup
+- Node.js 18+ 
+- PostgreSQL database (Neon recommended)
+- Fast2SMS API key (for SMS)
+
+### Local Development
 
 1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/mobile-repair-tracker.git
+   cd mobile-repair-tracker
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   cd frontend && npm install
+   cd ../backend && npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp env-example.txt .env
+   # Edit .env with your configuration
+   ```
+
+4. **Start the development servers**
+   ```bash
+   # Terminal 1: Backend
+   node server-secure.js
+   
+   # Terminal 2: Frontend
+   npm run dev
+   ```
+
+5. **Access the application**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:5000
+   - Default admin: admin/admin123
+
+## 🌐 Vercel Deployment
+
+### Frontend + Backend Deployment
+
+This project is configured for full-stack deployment on Vercel with the following structure:
+
+```
+/
+├── api/                    # Vercel serverless functions
+│   ├── auth/
+│   │   ├── login.ts
+│   │   └── register.ts
+│   ├── suppliers/
+│   │   ├── index.ts
+│   │   └── payments.ts
+│   ├── transactions/
+│   │   └── index.ts
+│   └── test.ts
+├── frontend/              # React frontend
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/               # Backend libraries
+├── shared/                # Shared types and schemas
+├── vercel.json           # Vercel configuration
+└── package.json
+```
+
+### Deployment Steps
+
+1. **Connect to Vercel**
+   ```bash
+   npm install -g vercel
+   vercel login
+   ```
+
+2. **Deploy to Vercel**
+   ```bash
+   vercel --prod
+   ```
+
+3. **Set Environment Variables in Vercel Dashboard**
+   
+   Go to your Vercel project dashboard → Settings → Environment Variables and add:
+
+   **Backend Variables:**
+   ```
+   DATABASE_URL=postgresql://username:password@host:port/database
+   JWT_SECRET=your-super-secret-jwt-key-here
+   FAST2SMS_API_KEY=your-fast2sms-api-key
+   FAST2SMS_SENDER_ID=your-sender-id
+   CORS_ORIGIN=https://your-frontend-domain.vercel.app
+   NODE_ENV=production
+   ```
+
+   **Frontend Variables:**
+   ```
+   VITE_API_URL=https://your-backend-domain.vercel.app/api
+   VITE_SOCKET_URL=https://your-backend-domain.vercel.app
+   ```
+
+4. **Redeploy after setting environment variables**
+   ```bash
+   vercel --prod
+   ```
+
+### Environment Variables Reference
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `JWT_SECRET` | Secret key for JWT tokens | Yes |
+| `FAST2SMS_API_KEY` | Fast2SMS API key for SMS | No |
+| `FAST2SMS_SENDER_ID` | SMS sender ID | No |
+| `CORS_ORIGIN` | Allowed CORS origins | Yes |
+| `NODE_ENV` | Environment (production/development) | Yes |
+
+## 📱 Mobile App Build
+
+### Android APK
 ```bash
-git clone <repository-url>
-cd mobile-repair-tracker
+# Install Android build tools
+npm install -g @capacitor/cli
+npx cap add android
+npx cap build android
 ```
 
-2. **Set up environment variables**
-
-Create `.env.local` in the frontend directory:
-```env
-VITE_API_URL=https://your-backend.vercel.app/api
-VITE_SOCKET_URL=https://your-backend.vercel.app
-```
-
-Create `.env` in the backend directory:
-```env
-DATABASE_URL=your-neon-postgresql-url
-JWT_SECRET=your-jwt-secret
-FAST2SMS_API_KEY=your-fast2sms-api-key
-CORS_ORIGIN=https://your-frontend.vercel.app
-```
-
-### Development
-
-1. **Start the backend**
+### Windows EXE
 ```bash
-cd backend
-npm install
-npm run dev
+npm run electron:build
 ```
 
-2. **Start the frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## 🔧 API Endpoints
 
-3. **Start the desktop app**
-```bash
-cd desktop
-npm install
-npm run dev
-```
-
-## 📦 Deployment
-
-### Frontend (Vercel)
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy automatically
-
-### Backend (Vercel Functions)
-1. Backend functions are automatically deployed with frontend
-2. Set environment variables in Vercel dashboard
-3. Functions are available at `/api/*` endpoints
-
-### Database (Neon)
-1. Create Neon PostgreSQL database
-2. Update `DATABASE_URL` in environment variables
-3. Database schema is auto-created on first connection
-
-## 🔧 Configuration
-
-### Database Schema
-The application automatically creates the following tables:
-- `users` - User authentication and roles
-- `transactions` - Customer repair transactions
-- `suppliers` - Supplier information
-- `expenditures` - Parts and supplies tracking
-- `payments` - Supplier payment history
-- `bills` - Generated e-bills
-
-### API Endpoints
-
-#### Authentication
+### Authentication
 - `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration (admin only)
-- `GET /api/auth/me` - Get current user
+- `POST /api/auth/register` - User registration
 
-#### Transactions
-- `GET /api/transactions` - List transactions
-- `POST /api/transactions` - Create transaction
-- `DELETE /api/transactions` - Clear all transactions
+### Transactions
+- `GET /api/transactions` - Get all transactions
+- `POST /api/transactions` - Create new transaction
+- `DELETE /api/transactions` - Clear all transactions (admin)
 
-#### Suppliers
-- `GET /api/suppliers` - List suppliers
-- `POST /api/suppliers` - Create supplier
-- `PUT /api/suppliers/:id` - Update supplier
+### Suppliers
+- `GET /api/suppliers` - Get all suppliers with dues
+- `POST /api/suppliers` - Create new supplier
+- `DELETE /api/suppliers` - Clear all suppliers (admin)
 
-#### E-Bills
-- `POST /api/bills/generate` - Generate e-bill
-- `GET /api/bills` - List bills
-- `POST /api/bills/send-sms` - Send bill via SMS
+### Supplier Payments
+- `GET /api/suppliers/payments` - Get all payments
+- `POST /api/suppliers/payments` - Record payment
+- `DELETE /api/suppliers/payments` - Clear all payments (admin)
+
+## 🗄️ Database Schema
+
+The application uses PostgreSQL with the following main tables:
+
+- `users` - User authentication and roles
+- `transactions` - Repair transactions
+- `expenditures` - Parts and service costs
+- `suppliers` - Supplier information
+- `supplier_payments` - Payment history
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- CORS protection
+- Input validation with Zod
+- SQL injection prevention
 
 ## 🧪 Testing
 
-Run the test suite:
 ```bash
-npm run test
+# Run all tests
+node test-complete-system.js
+
+# Test specific features
+node test-ebill-features.js
+node test-secure-authentication.js
+node test-realtime-sync.js
 ```
 
-## 📱 Mobile App
+## 📊 Monitoring & Analytics
 
-The frontend is a Progressive Web App (PWA) that can be installed on mobile devices:
-1. Open the web app on your mobile browser
-2. Add to home screen
-3. Use as a native app
+- Real-time transaction tracking
+- Supplier due monitoring
+- Expenditure analytics
+- Payment history
+- User activity logs
 
-## 🖥️ Desktop App
+## 🤝 Contributing
 
-Build the desktop app:
-```bash
-cd desktop
-npm run build
-```
-
-## 🔒 Security
-
-- JWT-based authentication
-- Role-based access control
-- Environment variable protection
-- CORS configuration
-- Input validation and sanitization
-
-## 📞 Support
-
-For issues and questions:
-1. Check the documentation
-2. Review existing issues
-3. Create a new issue with detailed information
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## 📄 License
 
-MIT License - see LICENSE file for details 
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Check the documentation
+- Review the test files for examples
+
+## 🔄 Updates
+
+- **v1.0.0**: Initial release with core features
+- **v1.1.0**: Added Vercel deployment support
+- **v1.2.0**: Enhanced security and real-time features
+
+---
+
+**Built with ❤️ for mobile repair businesses** 
