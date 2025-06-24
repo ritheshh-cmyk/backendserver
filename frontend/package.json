@@ -2,6 +2,7 @@
   "name": "mobile-repair-tracker-frontend",
   "version": "1.0.0",
   "private": true,
+  "_comment": "Fixed: Removed non-existent Radix UI packages for Vercel deployment",
   "type": "module",
   "scripts": {
     "dev": "vite",
