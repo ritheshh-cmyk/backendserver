@@ -1,4 +1,4 @@
-import { schema } from "@shared/schema";
+// import { schema } from '@shared/schema'; // Removed unused import
 import { 
   users, 
   transactions, 
@@ -259,19 +259,19 @@ export class MemStorage implements IStorage {
     const id = this.currentTransactionId++;
     
     // Calculate profit based on cost type
-    let totalCost = 0.toString();
+    let totalCost = "0";
     
     if (insertTransaction.requiresInventory) {
       // External Purchase Mode: Calculate profit as Repair Cost - External Purchase Costs
       if (insertTransaction.externalPurchases && insertTransaction.externalPurchases.length > 0) {
-        totalCost = insertTransaction.externalPurchases.reduce((sum: number, purchase: any) => sum + purchase.cost, 0);
+        totalCost = insertTransaction.externalPurchases.reduce(function(sum: number, purchase: any) { return sum + (purchase.amount || 0); }, 0).toString();
       }
     } else {
       // Internal Repair Mode: Calculate profit as Repair Cost - Internal Cost
-      totalCost = insertTransaction.internalCost || 0;
+      totalCost = insertTransaction.internalCost?.toString() || "0";
     }
     
-    const profit = insertTransaction.repairCost - totalCost;
+    const profit = (parseFloat(insertTransaction.repairCost) - parseFloat(totalCost)).toString();
     
     const transaction: Transaction = {
       id,
@@ -279,12 +279,12 @@ export class MemStorage implements IStorage {
       mobileNumber: insertTransaction.mobileNumber,
       deviceModel: insertTransaction.deviceModel,
       repairType: insertTransaction.repairType,
-      repairCost: insertTransaction.repairCost.toString(),
-      actualCost: totalCost.toString(),
-      profit: profit.toString(),
+      repairCost: insertTransaction.repairCost,
+      actualCost: totalCost,
+      profit: profit,
       paymentMethod: insertTransaction.paymentMethod,
-      amountGiven: insertTransaction.amountGiven.toString(),
-      changeReturned: insertTransaction.changeReturned.toString(),
+      amountGiven: insertTransaction.amountGiven?.toString() || "0",
+      changeReturned: insertTransaction.changeReturned?.toString() || "0",
       freeGlassInstallation: insertTransaction.freeGlassInstallation || false,
       remarks: insertTransaction.remarks || null,
       status: insertTransaction.status || "completed",
@@ -337,14 +337,14 @@ export class MemStorage implements IStorage {
 
     const updatedTransaction: Transaction = {
       ...existingTransaction,
-      repairCost: updates.repairCost?.toString() || existingTransaction.repairCost,
-      actualCost: updates.actualCost?.toString() || existingTransaction.actualCost,
-      profit: updates.profit?.toString() || existingTransaction.profit,
-      amountGiven: updates.amountGiven?.toString() || existingTransaction.amountGiven,
-      changeReturned: updates.changeReturned?.toString() || existingTransaction.changeReturned,
-      externalItemCost: updates.externalItemCost?.toString() || existingTransaction.externalItemCost,
+      repairCost: updates.repairCost || existingTransaction.repairCost,
+      actualCost: updates.actualCost || existingTransaction.actualCost,
+      profit: updates.profit || existingTransaction.profit,
+      amountGiven: updates.amountGiven || existingTransaction.amountGiven,
+      changeReturned: updates.changeReturned || existingTransaction.changeReturned,
+      externalItemCost: updates.externalItemCost || existingTransaction.externalItemCost,
       externalPurchases: updates.externalPurchases ? JSON.stringify(updates.externalPurchases) : existingTransaction.externalPurchases,
-      internalCost: updates.internalCost?.toString() || existingTransaction.internalCost,
+      internalCost: updates.internalCost || existingTransaction.internalCost,
     };
     
     this.transactions.set(id, updatedTransaction);
