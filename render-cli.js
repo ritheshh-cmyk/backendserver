@@ -60,6 +60,7 @@ Available commands:
   deploy          - Deploy backend to Render
   services        - List all services
   status          - Check deployment status
+  logs            - Fetch and display latest deployment logs
   help            - Show this help message
   exit            - Exit the CLI
 
@@ -82,8 +83,13 @@ async function listServices() {
         response.data.forEach((service, index) => {
           console.log(`${index + 1}. ${service.service.name}`);
           console.log(`   ID: ${service.service.id}`);
-          console.log(`   Status: ${service.service.status}`);
-          console.log(`   URL: https://${service.service.serviceDetailsPath}`);
+          console.log(`   Status: ${service.service.status || 'Unknown'}`);
+          // Try different possible locations for the URL
+          const url = service.service.serviceDetailsPath || 
+                     service.service.url || 
+                     service.service.domain || 
+                     `https://${service.service.name}.onrender.com`;
+          console.log(`   URL: ${url}`);
           console.log('');
         });
       }
@@ -112,6 +118,7 @@ async function deployBackend() {
     // Check existing services
     const servicesResponse = await makeRequest('GET', '/v1/services');
     let serviceId = null;
+    let serviceName = null;
     
     if (servicesResponse.status === 200) {
       // Look for either "mobile-repair-backend" or "backendmobile"
@@ -121,7 +128,8 @@ async function deployBackend() {
       
       if (existingService) {
         serviceId = existingService.service.id;
-        console.log(`✅ Found existing service: ${existingService.service.name} (ID: ${serviceId})`);
+        serviceName = existingService.service.name;
+        console.log(`✅ Found existing service: ${serviceName} (ID: ${serviceId})`);
         console.log('🚀 Triggering redeploy...');
       }
     }
@@ -143,11 +151,19 @@ async function deployBackend() {
       }
       console.log('⏳ Check status at: https://dashboard.render.com');
       
-      // Get service details for URL
-      const serviceResponse = await makeRequest('GET', `/v1/services/${serviceId}`);
-      if (serviceResponse.status === 200) {
-        const service = serviceResponse.data.service;
-        console.log(`🌐 Service URL: https://${service.serviceDetailsPath}`);
+      // Get service details for URL - handle potential missing fields
+      try {
+        const serviceResponse = await makeRequest('GET', `/v1/services/${serviceId}`);
+        if (serviceResponse.status === 200) {
+          const service = serviceResponse.data.service;
+          const url = service.serviceDetailsPath || 
+                     service.url || 
+                     service.domain || 
+                     `https://${serviceName}.onrender.com`;
+          console.log(`🌐 Service URL: ${url}`);
+        }
+      } catch (urlError) {
+        console.log(`🌐 Service URL: https://${serviceName}.onrender.com`);
       }
     } else {
       console.log('❌ Failed to trigger deployment:', deployResponse.data);
@@ -171,8 +187,14 @@ async function checkStatus() {
       if (backendService) {
         console.log(`\n📋 Service: ${backendService.service.name}`);
         console.log(`🆔 ID: ${backendService.service.id}`);
-        console.log(`📊 Status: ${backendService.service.status}`);
-        console.log(`🌐 URL: https://${backendService.service.serviceDetailsPath}`);
+        console.log(`📊 Status: ${backendService.service.status || 'Unknown'}`);
+        
+        // Try different possible locations for the URL
+        const url = backendService.service.serviceDetailsPath || 
+                   backendService.service.url || 
+                   backendService.service.domain || 
+                   `https://${backendService.service.name}.onrender.com`;
+        console.log(`🌐 URL: ${url}`);
       } else {
         console.log('❌ Backend service not found. Run "deploy" first.');
       }
@@ -181,6 +203,55 @@ async function checkStatus() {
     }
   } catch (error) {
     console.error('❌ Error:', error.message);
+  }
+}
+
+async function showLogs() {
+  try {
+    console.log('📜 Fetching latest deployment logs...');
+    // 1. Get all services
+    const servicesResponse = await makeRequest('GET', '/v1/services');
+    if (servicesResponse.status !== 200) {
+      console.log('❌ Failed to fetch services:', servicesResponse.data);
+      return;
+    }
+    // 2. Find the backend service
+    const backendService = servicesResponse.data.find(
+      service => service.service.name === 'mobile-repair-backend' || service.service.name === 'backendmobile'
+    );
+    if (!backendService) {
+      console.log('❌ Backend service not found.');
+      return;
+    }
+    const serviceId = backendService.service.id;
+    // 3. Get deploys for the service
+    const deploysResponse = await makeRequest('GET', `/v1/services/${serviceId}/deploys`);
+    if (deploysResponse.status !== 200 || !Array.isArray(deploysResponse.data)) {
+      console.log('❌ Failed to fetch deploys:', deploysResponse.data);
+      return;
+    }
+    if (deploysResponse.data.length === 0) {
+      console.log('❌ No deploys found for this service.');
+      return;
+    }
+    // 4. Get the latest deploy
+    const latestDeploy = deploysResponse.data[0];
+    const deployId = latestDeploy.deploy.id;
+    // 5. Fetch logs for the latest deploy
+    const logsResponse = await makeRequest('GET', `/v1/deploys/${deployId}/logs`);
+    if (logsResponse.status !== 200) {
+      console.log('❌ Failed to fetch logs:', logsResponse.data);
+      return;
+    }
+    console.log('--- Latest Deploy Logs ---');
+    if (logsResponse.data && logsResponse.data.logs) {
+      console.log(logsResponse.data.logs);
+    } else {
+      console.log(logsResponse.data);
+    }
+    console.log('-------------------------');
+  } catch (error) {
+    console.error('❌ Error fetching logs:', error.message);
   }
 }
 
@@ -197,10 +268,17 @@ async function main() {
     case 'status':
       await checkStatus();
       break;
+    case 'logs':
+      await showLogs();
+      break;
     case 'help':
     case '--help':
     case '-h':
       await showHelp();
+      break;
+    case 'exit':
+      rl.close();
+      process.exit(0);
       break;
     default:
       console.log('🚀 Render CLI - Custom Deployment Tool');
