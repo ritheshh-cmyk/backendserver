@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: mobile-repair-backend
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    env: node 
