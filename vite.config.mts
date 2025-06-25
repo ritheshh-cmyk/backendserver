@@ -38,12 +38,15 @@ export default defineConfig({
     }
   },
   server: {
-    host: '0.0.0.0',
+    host: true,
     port: 5000,
-    allowedHosts: 'all',
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    strictPort: true,
+    hmr: {
+      port: 5000,
+    },
+    cors: {
+      origin: true,
+      credentials: true,
     },
   },
 });
