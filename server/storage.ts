@@ -259,12 +259,12 @@ export class MemStorage implements IStorage {
     const id = this.currentTransactionId++;
     
     // Calculate profit based on cost type
-    let totalCost = 0;
+    let totalCost = 0.toString();
     
     if (insertTransaction.requiresInventory) {
       // External Purchase Mode: Calculate profit as Repair Cost - External Purchase Costs
       if (insertTransaction.externalPurchases && insertTransaction.externalPurchases.length > 0) {
-        totalCost = insertTransaction.externalPurchases.reduce((sum, purchase) => sum + purchase.cost, 0);
+        totalCost = insertTransaction.externalPurchases.reduce((sum: number, purchase: any) => sum + purchase.cost, 0);
       }
     } else {
       // Internal Repair Mode: Calculate profit as Repair Cost - Internal Cost

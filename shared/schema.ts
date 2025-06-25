@@ -1,5 +1,5 @@
 import { pgTable, text, serial, decimal, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+// import { createInsertSchema } from "drizzle-zod" // Commented out for backend
 import { z } from "zod";
 
 export const transactions = pgTable("transactions", {

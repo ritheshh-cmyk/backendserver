@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { 
-  type User,
-  type InsertUser,
-  type Transaction,
+  type User, 
+  type InsertUser, 
+  type Transaction, 
   type InsertTransaction,
   type InventoryItem,
   type InsertInventoryItem,
@@ -131,7 +131,7 @@ class MemStorage {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const todayTransactions = this.transactions.filter(t => 
       t.createdAt >= today && t.createdAt < tomorrow
     );
@@ -351,7 +351,7 @@ class MemStorage {
     this.groupedExpenditures.splice(index, 1);
     return true;
   }
-
+  
   // Grouped Expenditure Payment methods
   async createGroupedExpenditurePayment(data: InsertGroupedExpenditurePayment): Promise<GroupedExpenditurePayment> {
     const payment: GroupedExpenditurePayment = {
@@ -391,7 +391,7 @@ class MemStorage {
       summary.push({
         supplierId: supplier.id,
         supplierName: supplier.name,
-        totalPaid,
+          totalPaid,
         paymentCount: payments.length,
         lastPayment: payments.length > 0 ? Math.max(...payments.map(p => p.paymentDate.getTime())) : null
       });
@@ -400,4 +400,4 @@ class MemStorage {
   }
 }
 
-export const storage = new MemStorage(); 
+export const storage = new MemStorage();
