@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "cd frontend && npm run build",
+    "build": "cd frontend && npm install && npm run build",
     "preview": "vite preview",
     "electron:build": "npm run build && electron-builder",
     "vercel-build": "cd frontend && npm install && npm run build"
