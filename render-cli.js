@@ -114,53 +114,22 @@ async function deployBackend() {
     let serviceId = null;
     
     if (servicesResponse.status === 200) {
+      // Look for either "mobile-repair-backend" or "backendmobile"
       const existingService = servicesResponse.data.find(
-        service => service.service.name === 'mobile-repair-backend'
+        service => service.service.name === 'mobile-repair-backend' || service.service.name === 'backendmobile'
       );
       
       if (existingService) {
         serviceId = existingService.service.id;
-        console.log('✅ Found existing service, triggering redeploy...');
+        console.log(`✅ Found existing service: ${existingService.service.name} (ID: ${serviceId})`);
+        console.log('🚀 Triggering redeploy...');
       }
     }
     
     if (!serviceId) {
-      console.log('🔧 Creating new service...');
-      const deployConfig = {
-        name: 'mobile-repair-backend',
-        type: 'web_service',
-        env: 'node',
-        buildCommand: 'npm install && npm run build',
-        startCommand: 'npm run start',
-        repo: REPO_URL,
-        branch: 'main',
-        ownerId: owner.id,
-        serviceDetails: {
-          env: 'node',
-          buildCommand: 'npm install && npm run build',
-          startCommand: 'npm run start',
-          repo: REPO_URL,
-          branch: 'main',
-          envSpecificDetails: {
-            buildCommand: 'npm install && npm run build',
-            startCommand: 'npm run start'
-          }
-        },
-        envVars: [
-          { key: 'NODE_ENV', value: 'production' },
-          { key: 'PORT', value: '10000' }
-        ]
-      };
-      
-      const createResponse = await makeRequest('POST', '/v1/services', deployConfig);
-      
-      if (createResponse.status === 201) {
-        serviceId = createResponse.data.service.id;
-        console.log('✅ Service created successfully!');
-      } else {
-        console.log('❌ Failed to create service:', createResponse.data);
-        return;
-      }
+      console.log('❌ No existing service found. Creating new service requires payment.');
+      console.log('💡 Try deploying via dashboard: https://dashboard.render.com');
+      return;
     }
     
     // Trigger deployment
@@ -169,8 +138,17 @@ async function deployBackend() {
     
     if (deployResponse.status === 201) {
       console.log('✅ Deployment triggered successfully!');
-      console.log(`🔗 Deployment ID: ${deployResponse.data.deploy.id}`);
+      if (deployResponse.data && deployResponse.data.deploy) {
+        console.log(`🔗 Deployment ID: ${deployResponse.data.deploy.id}`);
+      }
       console.log('⏳ Check status at: https://dashboard.render.com');
+      
+      // Get service details for URL
+      const serviceResponse = await makeRequest('GET', `/v1/services/${serviceId}`);
+      if (serviceResponse.status === 200) {
+        const service = serviceResponse.data.service;
+        console.log(`🌐 Service URL: https://${service.serviceDetailsPath}`);
+      }
     } else {
       console.log('❌ Failed to trigger deployment:', deployResponse.data);
     }
@@ -187,7 +165,7 @@ async function checkStatus() {
     
     if (response.status === 200) {
       const backendService = response.data.find(
-        service => service.service.name === 'mobile-repair-backend'
+        service => service.service.name === 'mobile-repair-backend' || service.service.name === 'backendmobile'
       );
       
       if (backendService) {
