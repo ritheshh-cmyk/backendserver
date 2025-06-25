@@ -2,6 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import type { Server as SocketIOServer } from "socket.io";
+import authRoutes from "./auth-routes.js";
 import { 
   insertTransactionSchema, 
   insertInventoryItemSchema, 
@@ -15,6 +16,9 @@ import { z } from "zod";
 import ExcelJS from "exceljs";
 
 export async function registerRoutes(app: Express, io: SocketIOServer): Promise<Server> {
+  // Auth routes
+  app.use("/api/auth", authRoutes);
+  
   // Transaction routes
   app.post("/api/transactions", (async (req, res) => {
     try {

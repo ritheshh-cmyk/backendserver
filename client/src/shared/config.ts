@@ -12,21 +12,20 @@ const getCurrentHost = () => {
 // Determine the appropriate API base URL
 const getApiBaseUrl = () => {
   if (isDevelopment) {
-    // In development, use the laptop's IP address for mobile access
+    // Use the same host as the frontend, different port for backend
     const hostname = getCurrentHost();
     
-    // If accessing from mobile (different IP), use the laptop's IP
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      // This will be replaced with the actual laptop IP when deployed
-      return `http://192.168.125.238:5000/api`;
+    // If accessing from Replit URL, use the same host with port 5000
+    if (hostname.includes('replit.dev')) {
+      return `${window.location.protocol}//${hostname.replace(':5000', '')}:5000/api`;
     }
     
     // Local development
     return 'http://localhost:5000/api';
   }
   
-  // Production - using the exact deployed backend URL
-  return 'https://mobileedrf-509mbr4dj-ritheshs-projects-2bddf162.vercel.app/api';
+  // Production - using relative path since we're serving from same origin
+  return '/api';
 };
 
 // Determine the appropriate Socket.IO URL
