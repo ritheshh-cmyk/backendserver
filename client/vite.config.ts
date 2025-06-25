@@ -13,7 +13,16 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5000,
     strictPort: false,
-    cors: true,
+    allowedHosts: [
+      'localhost',
+      '.replit.dev',
+      '.picard.replit.dev',
+      '68b60832-bfbe-49fc-8d66-bf56a1b38c56-00-1k535ykx4530y.picard.replit.dev'
+    ],
+    cors: {
+      origin: true,
+      credentials: true
+    },
     fs: {
       strict: false,
       allow: ['..']
