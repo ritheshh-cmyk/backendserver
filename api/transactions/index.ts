@@ -1,134 +1,137 @@
-import { sql } from '../../backend/lib/database.js';
-import { authenticateToken } from '../../backend/lib/auth.js';
-
-// Helper to map DB fields to frontend expectations
-function mapTransaction(t: any) {
-  return {
-    id: t.id,
-    customerName: t.customer_name,
-    mobileNumber: t.mobile_number,
-    deviceModel: t.device_model,
-    repairType: t.repair_type,
-    repairCost: t.repair_cost,
-    paymentMethod: t.payment_method,
-    amountGiven: t.amount_given,
-    changeReturned: t.change_returned,
-    status: t.status,
-    remarks: t.remarks,
-    createdAt: t.created_at,
-    expenditures: t.expenditures || [],
-  };
-}
+import { sql } from '../../lib/database.js';
+import { requireAuth } from '../../lib/auth.js';
+import type { Transaction } from '../../../shared/types.js';
 
 export default async function handler(req: any, res: any) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
-    // Verify authentication
-    const user = await authenticateToken(req);
-    if (!user) {
-      return res.status(401).json({ data: null, error: 'Authentication required' });
-    }
+    // Authenticate user
+    const user = await requireAuth(req);
 
     switch (req.method) {
-      case 'GET': {
-        // Get all transactions
-        const transactions = await sql`
-          SELECT 
-            t.*,
-            json_agg(
-              json_build_object(
-                'id', e.id,
-                'item', e.item,
-                'cost', e.cost,
-                'store', e.store,
-                'customStore', e.custom_store,
-                'createdAt', e.created_at
-              )
-            ) as expenditures
-          FROM transactions t
-          LEFT JOIN expenditures e ON t.id = e.transaction_id
-          GROUP BY t.id
-          ORDER BY t.created_at DESC
-        `;
-        return res.status(200).json({ data: transactions.map(mapTransaction), error: null });
-      }
-      case 'POST': {
-        const {
-          customerName,
-          mobileNumber,
-          deviceModel,
-          repairType,
-          repairCost,
-          paymentMethod,
-          amountGiven,
-          changeReturned,
-          status,
-          remarks,
-          partsCost
-        } = req.body;
-        // Validate required fields
-        if (!customerName || !mobileNumber || !deviceModel || !repairType || !repairCost) {
-          return res.status(400).json({ data: null, error: 'Missing required fields' });
-        }
-        // Create transaction
-        const newTransaction = await sql`
-          INSERT INTO transactions (
-            customer_name, mobile_number, device_model, repair_type, 
-            repair_cost, payment_method, amount_given, change_returned, 
-            status, remarks, created_at
-          )
-          VALUES (
-            ${customerName}, ${mobileNumber}, ${deviceModel}, ${repairType},
-            ${repairCost}, ${paymentMethod}, ${amountGiven}, ${changeReturned},
-            ${status}, ${remarks}, NOW()
-          )
-          RETURNING *
-        `;
-        const transaction = newTransaction[0];
-        // Create expenditures if partsCost is provided
-        if (partsCost && Array.isArray(partsCost)) {
-          for (const part of partsCost) {
-            await sql`
-              INSERT INTO expenditures (
-                transaction_id, item, cost, store, custom_store, created_at
-              )
-              VALUES (
-                ${transaction.id}, ${part.item}, ${part.cost}, 
-                ${part.store}, ${part.customStore}, NOW()
-              )
-            `;
-          }
-        }
-        console.log('Transaction created by', user.username + ':', transaction.id);
-        return res.status(201).json({
-          data: mapTransaction(transaction),
-          error: null,
-          message: 'Transaction created successfully',
-        });
-      }
-      case 'DELETE': {
-        // Clear all transactions (admin only)
-        if (user.role !== 'admin') {
-          return res.status(403).json({ data: null, error: 'Admin access required' });
-        }
-        await sql`DELETE FROM expenditures`;
-        await sql`DELETE FROM transactions`;
-        console.log('Transactions cleared by admin');
-        return res.status(200).json({ data: null, error: null, message: 'All transactions cleared' });
-      }
+      case 'GET':
+        return await getTransactions(req, res, user);
+      case 'POST':
+        return await createTransaction(req, res, user);
+      case 'DELETE':
+        return await clearTransactions(req, res, user);
       default:
-        return res.status(405).json({ data: null, error: 'Method not allowed' });
+        return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error: any) {
+    if (error.message === 'Authentication required') {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     console.error('Transactions API error:', error);
-    return res.status(500).json({ data: null, error: error.message || 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getTransactions(req: any, res: any, user: any) {
+  const transactions = await sql`
+    SELECT 
+      id, customer_name as "customerName", mobile_number as "mobileNumber",
+      device_model as "deviceModel", repair_type as "repairType",
+      repair_cost as "repairCost", payment_method as "paymentMethod",
+      amount_given as "amountGiven", change_returned as "changeReturned",
+      status, remarks, parts_cost as "partsCost", created_at as "createdAt",
+      created_by as "createdBy"
+    FROM transactions 
+    ORDER BY created_at DESC
+  `;
+
+  return res.status(200).json(transactions);
+}
+
+async function createTransaction(req: any, res: any, user: any) {
+  const {
+    customerName,
+    mobileNumber,
+    deviceModel,
+    repairType,
+    repairCost,
+    paymentMethod,
+    amountGiven,
+    changeReturned,
+    status,
+    remarks,
+    partsCost
+  } = req.body;
+
+  // Validate required fields
+  if (!customerName || !mobileNumber || !deviceModel || !repairType || !repairCost) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // Insert transaction
+  const result = await sql`
+    INSERT INTO transactions (
+      customer_name, mobile_number, device_model, repair_type, repair_cost,
+      payment_method, amount_given, change_returned, status, remarks, parts_cost, created_by
+    ) VALUES (
+      ${customerName}, ${mobileNumber}, ${deviceModel}, ${repairType}, ${repairCost},
+      ${paymentMethod || 'Cash'}, ${amountGiven || repairCost}, ${changeReturned || 0},
+      ${status || 'Completed'}, ${remarks || ''}, ${JSON.stringify(partsCost || [])}, ${user.id}
+    ) RETURNING id
+  `;
+
+  const transactionId = result[0].id;
+
+  // Create expenditures for parts
+  if (partsCost && Array.isArray(partsCost)) {
+    for (const part of partsCost) {
+      if (part.cost > 0) {
+        await sql`
+          INSERT INTO expenditures (recipient, amount, description, remaining)
+          VALUES (
+            ${part.store || 'Unknown'}, 
+            ${part.cost}, 
+            ${`Parts for ${customerName} - ${deviceModel} (${part.item})`},
+            ${part.cost}
+          )
+        `;
+      }
+    }
+  }
+
+  // Update supplier dues
+  await updateSupplierDues();
+
+  return res.status(201).json({ 
+    message: 'Transaction created successfully',
+    transactionId 
+  });
+}
+
+async function clearTransactions(req: any, res: any, user: any) {
+  // Only admin can clear transactions
+  if (user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  await sql`DELETE FROM transactions`;
+  await sql`DELETE FROM expenditures`;
+  await sql`DELETE FROM payments`;
+
+  return res.status(200).json({ message: 'All data cleared successfully' });
+}
+
+async function updateSupplierDues() {
+  // Get all expenditures grouped by recipient
+  const expenditures = await sql`
+    SELECT recipient, SUM(amount) as total_amount, SUM(remaining) as total_remaining
+    FROM expenditures 
+    GROUP BY recipient
+  `;
+
+  // Update or insert supplier records
+  for (const exp of expenditures) {
+    await sql`
+      INSERT INTO suppliers (name, total_due, total_remaining)
+      VALUES (${exp.recipient}, ${exp.total_amount}, ${exp.total_remaining})
+      ON CONFLICT (name) 
+      DO UPDATE SET 
+        total_due = ${exp.total_amount},
+        total_remaining = ${exp.total_remaining}
+    `;
   }
 } 

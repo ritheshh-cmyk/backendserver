@@ -1,7 +1,11 @@
 services:
   - type: web
     name: mobile-repair-backend
-    rootDir: backend
+    env: node
     buildCommand: npm install && npm run build
     startCommand: npm run start
-    env: node 
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000 
