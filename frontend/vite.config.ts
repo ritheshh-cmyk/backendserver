@@ -15,9 +15,11 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: 5000,
     host: '0.0.0.0',
-    allowedHosts: ['all'],
+    port: 5000,
+    allowedHosts: [
+      '68b60832-bfbe-49fc-8d66-bf56a1b38c56-00-1k535ykx4530y.picard.replit.dev'
+    ],
     strictPort: false,
     cors: true,
   },
