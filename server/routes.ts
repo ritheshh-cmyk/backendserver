@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import type { Server as SocketIOServer } from "socket.io";
@@ -16,7 +16,7 @@ import ExcelJS from "exceljs";
 
 export async function registerRoutes(app: Express, io: SocketIOServer): Promise<Server> {
   // Transaction routes
-  app.post("/api/transactions", async (req, res) => {
+  app.post("/api/transactions", (async (req, res) => {
     try {
       const validatedData = insertTransactionSchema.parse(req.body);
       
@@ -36,9 +36,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
         res.status(500).json({ message: "Failed to create transaction" });
       }
     }
-  });
+  }) as RequestHandler);
 
-  app.get("/api/transactions", async (req, res) => {
+  app.get("/api/transactions", (async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -81,9 +81,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
-  });
+  }) as RequestHandler);
 
-  app.get("/api/transactions/:id", async (req, res) => {
+  app.get("/api/transactions/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const transaction = await storage.getTransaction(id);
@@ -96,9 +96,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transaction" });
     }
-  });
+  }) as RequestHandler);
 
-  app.put("/api/transactions/:id", async (req, res) => {
+  app.put("/api/transactions/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertTransactionSchema.partial().parse(req.body);
@@ -117,9 +117,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
         res.status(500).json({ message: "Failed to update transaction" });
       }
     }
-  });
+  }) as RequestHandler);
 
-  app.delete("/api/transactions/:id", async (req, res) => {
+  app.delete("/api/transactions/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteTransaction(id);
@@ -132,7 +132,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to delete transaction" });
     }
-  });
+  }) as RequestHandler);
 
   app.get("/api/stats/today", async (req, res) => {
     try {
@@ -340,7 +340,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     }
   });
 
-  app.delete("/api/expenditures/:id", async (req, res) => {
+  app.delete("/api/expenditures/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteExpenditure(id);
@@ -358,7 +358,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to delete expenditure" });
     }
-  });
+  }) as RequestHandler);
 
   // Get supplier expenditure summary
   app.get("/api/expenditures/supplier-summary", async (req, res) => {
@@ -371,7 +371,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
   });
 
   // Record payment to supplier
-  app.post("/api/expenditures/supplier-payment", async (req, res) => {
+  app.post("/api/expenditures/supplier-payment", (async (req, res) => {
     try {
       const { supplier, amount, paymentMethod, description } = req.body;
       
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to record payment" });
     }
-  });
+  }) as RequestHandler);
 
   // Reports export endpoint
   app.get("/api/reports/export", async (req, res) => {
@@ -523,7 +523,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
       console.error("Report export error:", error);
       res.status(500).json({ message: "Failed to export report" });
     }
-  });
+  }) as RequestHandler);
 
   app.get("/api/export/excel", async (req, res) => {
     try {
@@ -617,7 +617,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     }
   });
 
-  app.get("/api/grouped-expenditures/:id", async (req, res) => {
+  app.get("/api/grouped-expenditures/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const groupedExpenditure = await storage.getGroupedExpenditure(id);
@@ -630,9 +630,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch grouped expenditure" });
     }
-  });
+  }) as RequestHandler);
 
-  app.put("/api/grouped-expenditures/:id", async (req, res) => {
+  app.put("/api/grouped-expenditures/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertGroupedExpenditureSchema.partial().parse(req.body);
@@ -651,9 +651,9 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
         res.status(500).json({ message: "Failed to update grouped expenditure" });
       }
     }
-  });
+  }) as RequestHandler);
 
-  app.delete("/api/grouped-expenditures/:id", async (req, res) => {
+  app.delete("/api/grouped-expenditures/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteGroupedExpenditure(id);
@@ -666,7 +666,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to delete grouped expenditure" });
     }
-  });
+  }) as RequestHandler);
 
   // Grouped Expenditure Payments routes
   app.post("/api/grouped-expenditure-payments", async (req, res) => {
@@ -693,7 +693,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     }
   });
 
-  app.delete("/api/grouped-expenditure-payments/:id", async (req, res) => {
+  app.delete("/api/grouped-expenditure-payments/:id", (async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteGroupedExpenditurePayment(id);
@@ -706,7 +706,7 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
     } catch (error) {
       res.status(500).json({ message: "Failed to delete payment" });
     }
-  });
+  }) as RequestHandler);
 
   // Grouped Expenditure Summary
   app.get("/api/grouped-expenditures/summary", async (req, res) => {

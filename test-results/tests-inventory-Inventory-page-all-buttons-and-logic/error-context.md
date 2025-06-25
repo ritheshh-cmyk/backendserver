@@ -1,0 +1,199 @@
+# Page snapshot
+
+```yaml
+- region "Notifications (F8)":
+  - list
+- img
+- heading "Expenso" [level=1]
+- paragraph: Mobile Repair Tracker
+- navigation:
+  - list:
+    - listitem:
+      - link "Dashboard":
+        - /url: /
+        - img
+        - text: Dashboard
+    - listitem:
+      - link "Transactions":
+        - /url: /transactions
+        - img
+        - text: Transactions
+    - listitem:
+      - link "Inventory":
+        - /url: /inventory
+        - img
+        - text: Inventory
+    - listitem:
+      - link "Suppliers":
+        - /url: /suppliers
+        - img
+        - text: Suppliers
+    - listitem:
+      - link "Expenditures":
+        - /url: /expenditures
+        - img
+        - text: Expenditures
+    - listitem:
+      - link "Bills":
+        - /url: /bills
+        - img
+        - text: Bills
+    - listitem:
+      - link "Reports":
+        - /url: /reports
+        - img
+        - text: Reports
+    - listitem:
+      - link "Settings":
+        - /url: /settings
+        - img
+        - text: Settings
+- banner:
+  - text: Search
+  - img
+  - searchbox "Search"
+  - text: "Online • Last sync: 10:45:00 PM"
+  - button "3":
+    - img
+    - text: "3"
+  - button "Switch language":
+    - img
+    - text: Switch language
+  - button "Toggle theme":
+    - img
+    - img
+    - text: Toggle theme
+  - button "AD"
+- navigation:
+  - link:
+    - /url: /
+    - img
+  - img
+  - text: Inventory
+- main:
+  - heading "Inventory Management" [level=1]
+  - paragraph: Manage your repair parts and stock levels
+  - button "Export":
+    - img
+    - text: Export
+  - button "Add Item":
+    - img
+    - text: Add Item
+  - heading "Total Items" [level=3]
+  - img
+  - text: "5"
+  - paragraph: Active inventory
+  - heading "Total Value" [level=3]
+  - img
+  - text: ₹45,250
+  - paragraph: Inventory value
+  - heading "Low Stock" [level=3]
+  - img
+  - text: "3"
+  - paragraph: Items need restock
+  - heading "Critical" [level=3]
+  - img
+  - text: "2"
+  - paragraph: Urgent restock
+  - img
+  - textbox "Search inventory items..."
+  - combobox: All Categories
+  - combobox: All Status
+  - heading "Inventory Items" [level=3]
+  - paragraph: 5 items found
+  - table:
+    - rowgroup:
+      - row "Item Category Stock Cost/Price Supplier Status Actions":
+        - cell "Item"
+        - cell "Category"
+        - cell "Stock"
+        - cell "Cost/Price"
+        - cell "Supplier"
+        - cell "Status"
+        - cell "Actions"
+    - rowgroup:
+      - 'row "iPhone 14 Pro Screen iPhone 14 Pro Display 2 / 5 Cost: ₹8,000 Price: ₹12,000 TechParts Ltd Critical"':
+        - cell "iPhone 14 Pro Screen iPhone 14 Pro"
+        - cell "Display"
+        - cell "2 / 5":
+          - text: 2 / 5
+          - progressbar
+        - 'cell "Cost: ₹8,000 Price: ₹12,000"'
+        - cell "TechParts Ltd"
+        - cell "Critical":
+          - img
+          - text: Critical
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+      - 'row "Samsung S23 Battery Samsung Galaxy S23 Battery 8 / 10 Cost: ₹1,500 Price: ₹2,500 Mobile Components Inc Low Stock"':
+        - cell "Samsung S23 Battery Samsung Galaxy S23"
+        - cell "Battery"
+        - cell "8 / 10":
+          - text: 8 / 10
+          - progressbar
+        - 'cell "Cost: ₹1,500 Price: ₹2,500"'
+        - cell "Mobile Components Inc"
+        - cell "Low Stock"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+      - 'row "USB-C Charging Port OnePlus 11, Samsung Galaxy S23, Google Pixel 7 Charging Port 15 / 8 Cost: ₹800 Price: ₹1,500 Repair Supply Co Good"':
+        - cell "USB-C Charging Port OnePlus 11, Samsung Galaxy S23, Google Pixel 7"
+        - cell "Charging Port"
+        - cell "15 / 8":
+          - text: 15 / 8
+          - progressbar
+        - 'cell "Cost: ₹800 Price: ₹1,500"'
+        - cell "Repair Supply Co"
+        - cell "Good"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+      - 'row "iPhone 13 Camera Module iPhone 13, iPhone 13 Pro Camera 1 / 3 Cost: ₹3,000 Price: ₹5,000 TechParts Ltd Critical"':
+        - cell "iPhone 13 Camera Module iPhone 13, iPhone 13 Pro"
+        - cell "Camera"
+        - cell "1 / 3":
+          - text: 1 / 3
+          - progressbar
+        - 'cell "Cost: ₹3,000 Price: ₹5,000"'
+        - cell "TechParts Ltd"
+        - cell "Critical":
+          - img
+          - text: Critical
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+      - 'row "Screen Protectors (Universal) Universal Accessories 45 / 20 Cost: ₹50 Price: ₹200 Digital Parts Hub Good"':
+        - cell "Screen Protectors (Universal) Universal"
+        - cell "Accessories"
+        - cell "45 / 20":
+          - text: 45 / 20
+          - progressbar
+        - 'cell "Cost: ₹50 Price: ₹200"'
+        - cell "Digital Parts Hub"
+        - cell "Good"
+        - cell:
+          - button:
+            - img
+          - button:
+            - img
+          - button:
+            - img
+```

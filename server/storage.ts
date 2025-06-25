@@ -1,3 +1,4 @@
+import { schema } from "@shared/schema";
 import { 
   users, 
   transactions, 

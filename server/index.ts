@@ -39,34 +39,45 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Create HTTP server and Socket.IO server
-  const httpServer = createServer(app);
-  const io = new SocketIOServer(httpServer, {
-    cors: { origin: "*" }, // adjust as needed for production
-  });
+  try {
+    // Create HTTP server and Socket.IO server
+    const httpServer = createServer(app);
+    const io = new SocketIOServer(httpServer, {
+      cors: { origin: "*" }, // adjust as needed for production
+    });
 
-  // Pass io to registerRoutes (no longer returns a server)
-  await registerRoutes(app, io);
+    // Pass io to registerRoutes (no longer returns a server)
+    await registerRoutes(app, io);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      res.status(status).json({ message });
+      throw err;
+    });
 
-  if (app.get("env") === "development") {
-    await setupVite(app, httpServer);
-  } else {
-    serveStatic(app);
+    if (app.get("env") === "development") {
+      await setupVite(app, httpServer);
+    } else {
+      serveStatic(app);
+    }
+
+    const port = 5000;
+    httpServer.listen({
+      port,
+      host: "127.0.0.1"
+    }, () => {
+      log(`serving on port ${port}`);
+    });
+  } catch (err) {
+    console.error("Fatal error during server startup:", err);
+    try {
+      console.error("Error (string):", String(err));
+      console.error("Error (JSON):", JSON.stringify(err));
+    } catch (jsonErr) {
+      console.error("Error could not be stringified:", jsonErr);
+    }
+    process.exit(1);
   }
-
-  const port = 5000;
-  httpServer.listen({
-    port,
-    host: "127.0.0.1"
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();

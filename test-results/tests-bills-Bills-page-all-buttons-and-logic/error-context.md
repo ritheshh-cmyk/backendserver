@@ -1,0 +1,143 @@
+# Page snapshot
+
+```yaml
+- region "Notifications (F8)":
+  - list
+- img
+- heading "Expenso" [level=1]
+- paragraph: Mobile Repair Tracker
+- navigation:
+  - list:
+    - listitem:
+      - link "Dashboard":
+        - /url: /
+        - img
+        - text: Dashboard
+    - listitem:
+      - link "Transactions":
+        - /url: /transactions
+        - img
+        - text: Transactions
+    - listitem:
+      - link "Inventory":
+        - /url: /inventory
+        - img
+        - text: Inventory
+    - listitem:
+      - link "Suppliers":
+        - /url: /suppliers
+        - img
+        - text: Suppliers
+    - listitem:
+      - link "Expenditures":
+        - /url: /expenditures
+        - img
+        - text: Expenditures
+    - listitem:
+      - link "Bills":
+        - /url: /bills
+        - img
+        - text: Bills
+    - listitem:
+      - link "Reports":
+        - /url: /reports
+        - img
+        - text: Reports
+    - listitem:
+      - link "Settings":
+        - /url: /settings
+        - img
+        - text: Settings
+- banner:
+  - text: Search
+  - img
+  - searchbox "Search"
+  - text: "Online • Last sync: 10:45:00 PM"
+  - button "3":
+    - img
+    - text: "3"
+  - button "Switch language":
+    - img
+    - text: Switch language
+  - button "Toggle theme":
+    - img
+    - img
+    - text: Toggle theme
+  - button "AD"
+- navigation:
+  - link:
+    - /url: /
+    - img
+  - img
+  - text: Bills
+- main:
+  - heading "E-Bill Generator" [level=1]
+  - paragraph: Create and manage customer bills and invoices
+  - button "Export All":
+    - img
+    - text: Export All
+  - button "Create Bill":
+    - img
+    - text: Create Bill
+  - heading "Total Bills" [level=3]
+  - img
+  - text: "3"
+  - paragraph: All time
+  - heading "Total Amount" [level=3]
+  - img
+  - text: ₹20,500
+  - paragraph: Total invoiced
+  - heading "Paid Bills" [level=3]
+  - img
+  - text: "1"
+  - paragraph: Payment received
+  - heading "Pending" [level=3]
+  - img
+  - text: "1"
+  - paragraph: Awaiting payment
+  - img
+  - textbox "Search bills by customer or invoice number..."
+  - combobox: All Status
+  - img
+  - heading "INV-001" [level=3]
+  - text: Paid
+  - paragraph: Rajesh Kumar
+  - text: "Date: 2024-01-15 Items: 2"
+  - paragraph: ₹12,500
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - img
+  - heading "INV-002" [level=3]
+  - text: Sent
+  - paragraph: Priya Sharma
+  - text: "Date: 2024-01-14 Items: 2"
+  - paragraph: ₹3,500
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - img
+  - heading "INV-003" [level=3]
+  - text: Draft
+  - paragraph: Mohammed Ali
+  - text: "Date: 2024-01-13 Items: 2"
+  - paragraph: ₹4,500
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+```
