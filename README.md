@@ -1,248 +1,195 @@
-# Mobile Repair Tracker
+# Mobile Repair Tracker - "Call Me Mobiles"
 
-A comprehensive mobile repair shop management system with real-time tracking, e-bill generation, SMS/WhatsApp integration, and secure authentication.
+[![Deploy to Qovery](https://github.com/ritheshh-cmyk/mobile/workflows/Deploy%20to%20Qovery/badge.svg)](https://github.com/ritheshh-cmyk/mobile/actions)
+
+A comprehensive mobile repair shop management system with real-time updates, SMS notifications, and multi-shop support.
 
 ## 🚀 Features
 
-- **Transaction Management**: Create and track repair transactions
-- **Supplier Management**: Manage suppliers and track dues
-- **Expenditure Tracking**: Monitor parts and service costs
-- **E-Bill Generation**: Generate professional bills with QR codes
-- **SMS/WhatsApp Integration**: Send notifications to customers
-- **Real-time Sync**: Live updates across all devices
-- **Secure Authentication**: JWT-based user authentication
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Multi-language Support**: English and Hindi interfaces
+- **Transaction Management**: Track repairs, costs, and customer details
+- **Inventory Management**: Manage parts and suppliers
+- **Real-time Updates**: Socket.IO for live data synchronization
+- **SMS Notifications**: Fast2SMS integration for customer updates
+- **Multi-shop Support**: Separate data for different shop locations
+- **Reporting**: Comprehensive analytics and reports
+- **Billing System**: Generate and manage customer bills
 
 ## 🏗️ Architecture
 
-- **Frontend**: React + TypeScript + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + TypeScript
-- **Database**: PostgreSQL (Neon)
-- **Authentication**: JWT
-- **Real-time**: Socket.IO
-- **Deployment**: Vercel (Frontend + Backend)
+- **Backend**: Node.js + Express + Socket.IO
+- **Frontend**: React + TypeScript + Tailwind CSS
+- **Database**: In-memory storage (can be extended to PostgreSQL)
+- **Deployment**: Qovery with automatic CI/CD
 
-## 📦 Installation & Setup
+## 📦 Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Git
 
-- Node.js 18+ 
-- PostgreSQL database (Neon recommended)
-- Fast2SMS API key (for SMS)
-
-### Local Development
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/mobile-repair-tracker.git
-   cd mobile-repair-tracker
+   git clone https://github.com/ritheshh-cmyk/mobile.git
+   cd mobile
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
-   cd frontend && npm install
-   cd ../backend && npm install
+   cd backend && npm install
    ```
 
 3. **Set up environment variables**
    ```bash
+   # Copy the example environment file
    cp env-example.txt .env
-   # Edit .env with your configuration
+   
+   # Edit .env and add your Fast2SMS API key
+   FAST2SMS_API_KEY=your-api-key-here
    ```
 
-4. **Start the development servers**
+4. **Build and start the backend**
    ```bash
-   # Terminal 1: Backend
-   node server-secure.js
-   
-   # Terminal 2: Frontend
+   cd backend
+   npm run build
+   npm start
+   ```
+
+5. **Start the frontend**
+   ```bash
+   # In a new terminal
+   cd frontend-new
+   npm install
    npm run dev
    ```
 
-5. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:5000
-   - Default admin: admin/admin123
+## 🌐 Deployment
 
-## 🌐 Vercel Deployment
+This project is configured for automatic deployment to Qovery. Every push to the main branch triggers an automatic deployment.
 
-### Frontend + Backend Deployment
+### Manual Deployment
+See [QOVERY_DEPLOYMENT.md](QOVERY_DEPLOYMENT.md) for detailed deployment instructions.
 
-This project is configured for full-stack deployment on Vercel with the following structure:
+### Automatic Deployment Setup
+See [AUTO_DEPLOYMENT_SETUP.md](AUTO_DEPLOYMENT_SETUP.md) for setting up automatic deployment.
 
+## 📚 API Documentation
+
+### Base URL
+- **Development**: `http://localhost:10000`
+- **Production**: `https://your-app-url.qovery.app`
+
+### Endpoints
+
+#### Health Check
 ```
-/
-├── api/                    # Vercel serverless functions
-│   ├── auth/
-│   │   ├── login.ts
-│   │   └── register.ts
-│   ├── suppliers/
-│   │   ├── index.ts
-│   │   └── payments.ts
-│   ├── transactions/
-│   │   └── index.ts
-│   └── test.ts
-├── frontend/              # React frontend
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.ts
-├── backend/               # Backend libraries
-├── shared/                # Shared types and schemas
-├── vercel.json           # Vercel configuration
-└── package.json
+GET /health
 ```
 
-### Deployment Steps
+#### Authentication
+```
+POST /api/auth/login
+POST /api/auth/register
+```
 
-1. **Connect to Vercel**
-   ```bash
-   npm install -g vercel
-   vercel login
-   ```
+#### Transactions
+```
+GET    /api/transactions
+POST   /api/transactions
+GET    /api/transactions/:id
+PUT    /api/transactions/:id
+DELETE /api/transactions/:id
+```
 
-2. **Deploy to Vercel**
-   ```bash
-   vercel --prod
-   ```
+#### Suppliers
+```
+GET    /api/suppliers
+POST   /api/suppliers
+GET    /api/suppliers/:id
+PUT    /api/suppliers/:id
+DELETE /api/suppliers/:id
+```
 
-3. **Set Environment Variables in Vercel Dashboard**
-   
-   Go to your Vercel project dashboard → Settings → Environment Variables and add:
+#### Inventory
+```
+GET    /api/inventory
+POST   /api/inventory
+GET    /api/inventory/:id
+PUT    /api/inventory/:id
+DELETE /api/inventory/:id
+```
 
-   **Backend Variables:**
-   ```
-   DATABASE_URL=postgresql://username:password@host:port/database
-   JWT_SECRET=your-super-secret-jwt-key-here
-   FAST2SMS_API_KEY=your-fast2sms-api-key
-   FAST2SMS_SENDER_ID=your-sender-id
-   CORS_ORIGIN=https://your-frontend-domain.vercel.app
-   NODE_ENV=production
-   ```
+#### Expenditures
+```
+GET    /api/expenditures
+POST   /api/expenditures
+GET    /api/expenditures/:id
+PUT    /api/expenditures/:id
+DELETE /api/expenditures/:id
+```
 
-   **Frontend Variables:**
-   ```
-   VITE_API_URL=https://your-backend-domain.vercel.app/api
-   VITE_SOCKET_URL=https://your-backend-domain.vercel.app
-   ```
+#### SMS Notifications
+```
+POST /api/sms/send
+```
 
-4. **Redeploy after setting environment variables**
-   ```bash
-   vercel --prod
-   ```
+## 🔧 Configuration
 
-### Environment Variables Reference
+### Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `JWT_SECRET` | Secret key for JWT tokens | Yes |
-| `FAST2SMS_API_KEY` | Fast2SMS API key for SMS | No |
-| `FAST2SMS_SENDER_ID` | SMS sender ID | No |
-| `CORS_ORIGIN` | Allowed CORS origins | Yes |
-| `NODE_ENV` | Environment (production/development) | Yes |
+| `NODE_ENV` | Environment mode | Yes |
+| `PORT` | Server port | Yes |
+| `FAST2SMS_API_KEY` | Fast2SMS API key | Yes |
 
-## 📱 Mobile App Build
+### Socket.IO Events
 
-### Android APK
-```bash
-# Install Android build tools
-npm install -g @capacitor/cli
-npx cap add android
-npx cap build android
-```
+The backend emits these real-time events:
 
-### Windows EXE
-```bash
-npm run electron:build
-```
-
-## 🔧 API Endpoints
-
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-
-### Transactions
-- `GET /api/transactions` - Get all transactions
-- `POST /api/transactions` - Create new transaction
-- `DELETE /api/transactions` - Clear all transactions (admin)
-
-### Suppliers
-- `GET /api/suppliers` - Get all suppliers with dues
-- `POST /api/suppliers` - Create new supplier
-- `DELETE /api/suppliers` - Clear all suppliers (admin)
-
-### Supplier Payments
-- `GET /api/suppliers/payments` - Get all payments
-- `POST /api/suppliers/payments` - Record payment
-- `DELETE /api/suppliers/payments` - Clear all payments (admin)
-
-## 🗄️ Database Schema
-
-The application uses PostgreSQL with the following main tables:
-
-- `users` - User authentication and roles
-- `transactions` - Repair transactions
-- `expenditures` - Parts and service costs
-- `suppliers` - Supplier information
-- `supplier_payments` - Payment history
-
-## 🔒 Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Role-based access control
-- CORS protection
-- Input validation with Zod
-- SQL injection prevention
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-node test-complete-system.js
-
-# Test specific features
-node test-ebill-features.js
-node test-secure-authentication.js
-node test-realtime-sync.js
-```
-
-## 📊 Monitoring & Analytics
-
-- Real-time transaction tracking
-- Supplier due monitoring
-- Expenditure analytics
-- Payment history
-- User activity logs
+- `transactionCreated` - New transaction added
+- `transactionUpdated` - Transaction updated
+- `transactionDeleted` - Transaction deleted
+- `supplierCreated` - New supplier added
+- `supplierUpdated` - Supplier updated
+- `supplierDeleted` - Supplier deleted
+- `inventoryUpdated` - Inventory item updated
+- `expenditureCreated` - New expenditure added
+- `expenditureUpdated` - Expenditure updated
+- `expenditureDeleted` - Expenditure deleted
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-For support and questions:
-- Create an issue on GitHub
-- Check the documentation
-- Review the test files for examples
+- **Documentation**: Check the docs folder for detailed guides
+- **Issues**: Report bugs and feature requests via GitHub Issues
+- **Discussions**: Use GitHub Discussions for questions and ideas
 
-## 🔄 Updates
+## 🚀 Roadmap
 
-- **v1.0.0**: Initial release with core features
-- **v1.1.0**: Added Vercel deployment support
-- **v1.2.0**: Enhanced security and real-time features
+- [ ] Database integration (PostgreSQL)
+- [ ] User authentication and authorization
+- [ ] Advanced reporting and analytics
+- [ ] Mobile app (React Native)
+- [ ] Payment gateway integration
+- [ ] Customer portal
+- [ ] Advanced inventory management
+- [ ] Multi-language support
 
 ---
 
-**Built with ❤️ for mobile repair businesses** 
+Built with ❤️ for mobile repair shops worldwide. 
