@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ConnectionProvider } from "@/contexts/ConnectionContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Pages
 import Login from "./pages/auth/Login";
@@ -31,6 +32,14 @@ const queryClient = new QueryClient({
   },
 });
 
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" storageKey="expenso-theme">
@@ -40,47 +49,28 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                {/* Authentication routes */}
-                <Route path="/login" element={<Login />} />
+              <AuthProvider>
+                <Routes>
+                  {/* Authentication routes */}
+                  <Route path="/login" element={<Login />} />
 
-                {/* Main app routes */}
-                <Route path="/" element={<Dashboard />} />
-                <Route
-                  path="/dashboard"
-                  element={<Navigate to="/" replace />}
-                />
-
-                {/* Transaction routes */}
-                <Route path="/transactions" element={<Transactions />} />
-                <Route path="/transactions/new" element={<NewTransaction />} />
-                <Route
-                  path="/transactions/:id/edit"
-                  element={<EditTransaction />}
-                />
-
-                {/* Inventory routes */}
-                <Route path="/inventory" element={<Inventory />} />
-
-                {/* Supplier routes */}
-                <Route path="/suppliers" element={<Suppliers />} />
-                <Route path="/suppliers/:id" element={<SupplierDetails />} />
-
-                {/* Financial routes */}
-                <Route path="/expenditures" element={<Expenditures />} />
-
-                {/* Bill routes */}
-                <Route path="/bills" element={<Bills />} />
-
-                {/* Report routes */}
-                <Route path="/reports" element={<Reports />} />
-
-                {/* Settings routes */}
-                <Route path="/settings" element={<Settings />} />
-
-                {/* Catch-all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  {/* Main app routes (protected) */}
+                  <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                  <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                  <Route path="/transactions" element={<PrivateRoute><Transactions /></PrivateRoute>} />
+                  <Route path="/transactions/new" element={<PrivateRoute><NewTransaction /></PrivateRoute>} />
+                  <Route path="/transactions/:id/edit" element={<PrivateRoute><EditTransaction /></PrivateRoute>} />
+                  <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
+                  <Route path="/suppliers" element={<PrivateRoute><Suppliers /></PrivateRoute>} />
+                  <Route path="/suppliers/:id" element={<PrivateRoute><SupplierDetails /></PrivateRoute>} />
+                  <Route path="/expenditures" element={<PrivateRoute><Expenditures /></PrivateRoute>} />
+                  <Route path="/bills" element={<PrivateRoute><Bills /></PrivateRoute>} />
+                  <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+                  <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+                  {/* Catch-all route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AuthProvider>
             </BrowserRouter>
           </TooltipProvider>
         </ConnectionProvider>

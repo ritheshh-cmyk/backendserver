@@ -1,0 +1,37 @@
+application:
+  name: mobile-repair-tracker-backend
+  project: mobile-repair-tracker
+  publicly_accessible: true
+
+build:
+  dockerfile_path: ./Dockerfile
+  dockerfile_in_root: true
+
+environment:
+  variables:
+    - key: NODE_ENV
+      value: production
+    - key: PORT
+      value: "10000"
+    - key: FAST2SMS_API_KEY
+      value: "your-fast2sms-api-key-here"
+
+resources:
+  cpu: 0.5
+  memory: 512
+  storage: 1
+
+ports:
+  - internal_port: 10000
+    external_port: 80
+    protocol: HTTP
+    publicly_accessible: true
+
+healthchecks:
+  - path: /health
+    port: 10000
+    initial_delay_seconds: 30
+    period_seconds: 10
+    timeout_seconds: 5
+    failure_threshold: 3
+    success_threshold: 1 

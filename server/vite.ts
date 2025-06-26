@@ -5,11 +5,11 @@ const path = require("path");
 // import { createServer } from 'vite'; // Commented out for backend
 // import config from '../vite.config'; // Commented out for backend
 // import { nanoid } from 'nanoid'; // Commented out for backend
-const { createLogger } = require("vite");
+// const { createLogger } = require("vite"); // Commented out for backend
 const { typeServer } = require("http");
 // // // import { nanoid } from "nanoid" // Commented out for backend // Commented out for backend // Commented out for backend;
 
-const viteLogger = createLogger();
+// const viteLogger = createLogger(); // Commented out for backend
 
 function log(message, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

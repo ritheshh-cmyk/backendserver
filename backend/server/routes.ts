@@ -14,6 +14,7 @@ import {
 } from "../shared/schema";
 import { z } from "zod";
 import ExcelJS from "exceljs";
+import axios from 'axios';
 
 export async function registerRoutes(app: Express, io: SocketIOServer): Promise<Server> {
   // Auth routes
@@ -810,6 +811,160 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
   app.post('/api/transactions/clear', (req, res) => {
     res.status(501).json({ success: false, message: 'Not implemented.' });
   });
+
+  // --- SMS Sending Endpoint ---
+  app.post('/api/send-sms', (req, res) => {
+    (async () => {
+      const { phone, message } = req.body;
+      if (!phone || !message) {
+        return res.status(400).json({ success: false, error: 'Missing phone or message' });
+      }
+      try {
+        const apiKey = process.env.FAST2SMS_API_KEY;
+        if (!apiKey) {
+          return res.status(500).json({ success: false, error: 'SMS API key not configured' });
+        }
+        const fast2smsUrl = 'https://www.fast2sms.com/dev/bulkV2';
+        const payload = {
+          route: 'q',
+          numbers: phone,
+          message: message,
+          language: 'english',
+          flash: 0
+        };
+        const response = await axios.post(fast2smsUrl, payload, {
+          headers: {
+            'authorization': apiKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        res.json({ success: true, data: response.data });
+      } catch (error: any) {
+        const errMsg = error.response?.data || error.message || 'Failed to send SMS';
+        res.status(500).json({ success: false, error: errMsg });
+      }
+    })().catch(error => {
+      res.status(500).json({ success: false, error: 'Failed to send SMS' });
+    });
+  });
+
+  // 1. Backup all shop data
+  app.get('/api/backup', (req, res) => {
+    (async () => {
+      try {
+        const shop_id = req.query.shop_id as string;
+        if (!shop_id) return res.status(400).json({ error: 'shop_id required' });
+        const data = await storage.backupShopData(shop_id);
+        res.json(data);
+      } catch (e) {
+        res.status(500).json({ error: 'Backup failed' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Backup failed' });
+    });
+  });
+  
+  // Restore all shop data
+  app.post('/api/restore', (req, res) => {
+    (async () => {
+      try {
+        const shop_id = req.body.shop_id;
+        const data = req.body.data;
+        if (!shop_id || !data) return res.status(400).json({ error: 'shop_id and data required' });
+        await storage.restoreShopData(shop_id, data);
+        res.json({ success: true });
+      } catch (e) {
+        res.status(500).json({ error: 'Restore failed' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Restore failed' });
+    });
+  });
+  
+  // 2. Fetch transactions, bills, expenses for custom date range
+  app.get('/api/transactions/range', (req, res) => {
+    (async () => {
+      try {
+        const shop_id = req.query.shop_id as string;
+        const start = req.query.start as string;
+        const end = req.query.end as string;
+        if (!shop_id || !start || !end) return res.status(400).json({ error: 'shop_id, start, end required' });
+        const tx = await storage.getTransactionsByDateRangeForShop(shop_id, new Date(start), new Date(end));
+        res.json(tx);
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch transactions' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    });
+  });
+  
+  app.get('/api/bills/range', (req, res) => {
+    (async () => {
+      try {
+        const shop_id = req.query.shop_id as string;
+        const start = req.query.start as string;
+        const end = req.query.end as string;
+        if (!shop_id || !start || !end) return res.status(400).json({ error: 'shop_id, start, end required' });
+        const bills = await storage.getBillsByDateRangeForShop(shop_id, new Date(start), new Date(end));
+        res.json(bills);
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch bills' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Failed to fetch bills' });
+    });
+  });
+  
+  app.get('/api/expenditures/range', (req, res) => {
+    (async () => {
+      try {
+        const shop_id = req.query.shop_id as string;
+        const start = req.query.start as string;
+        const end = req.query.end as string;
+        if (!shop_id || !start || !end) return res.status(400).json({ error: 'shop_id, start, end required' });
+        const exps = await storage.getExpendituresByDateRangeForShop(shop_id, new Date(start), new Date(end));
+        res.json(exps);
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch expenditures' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Failed to fetch expenditures' });
+    });
+  });
+  
+  // 3. Feedback endpoints
+  app.post('/api/feedback', (req, res) => {
+    (async () => {
+      try {
+        const { billId, feedback } = req.body;
+        if (!billId || !feedback) return res.status(400).json({ error: 'billId and feedback required' });
+        await storage.saveFeedback(billId, feedback);
+        res.json({ success: true });
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to save feedback' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Failed to save feedback' });
+    });
+  });
+  
+  app.get('/api/feedback/:billId', (req, res) => {
+    (async () => {
+      try {
+        const billId = req.params.billId;
+        const feedback = await storage.getFeedback(billId);
+        res.json({ feedback });
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch feedback' });
+      }
+    })().catch(error => {
+      res.status(500).json({ error: 'Failed to fetch feedback' });
+    });
+  });
+  
+  // 4. Today's and yesterday's sales/profit - remove duplicates since they already exist above
+  // The existing stats routes at lines 153-192 already handle these endpoints
 
   const httpServer = createServer(app);
   return httpServer;

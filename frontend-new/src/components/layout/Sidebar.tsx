@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useRole } from "@/contexts/RoleContext";
 import {
   LayoutDashboard,
   CreditCard,
@@ -15,50 +14,8 @@ import {
   X,
   Smartphone,
 } from "lucide-react";
-
-const navigation = [
-  {
-    name: "dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    name: "transactions",
-    href: "/transactions",
-    icon: CreditCard,
-  },
-  {
-    name: "inventory",
-    href: "/inventory",
-    icon: Package,
-  },
-  {
-    name: "suppliers",
-    href: "/suppliers",
-    icon: Users,
-  },
-  {
-    name: "expenditures",
-    href: "/expenditures",
-    icon: TrendingUp,
-  },
-  {
-    name: "bills",
-    href: "/bills",
-    icon: Receipt,
-  },
-  {
-    name: "reports",
-    href: "/reports",
-    icon: FileText,
-  },
-  {
-    name: "settings",
-    href: "/settings",
-    icon: Settings,
-  },
-];
+import { getNavigationForRole } from "@/lib/navigation";
+import { useRole } from "@/hooks/use-role";
 
 interface SidebarProps {
   open: boolean;
@@ -68,7 +25,8 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation();
   const { t } = useLanguage();
-  const role = useRole();
+  const { role } = useRole();
+  const navigation = getNavigationForRole(role);
 
   const isActive = (item: (typeof navigation)[0]) => {
     if (item.exact) {
@@ -76,14 +34,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     }
     return location.pathname.startsWith(item.href);
   };
-
-  // Filter navigation based on role
-  const filteredNavigation =
-    role === "admin"
-      ? navigation
-      : navigation.filter((item) =>
-          ["dashboard", "transactions", "inventory", "suppliers", "bills"].includes(item.name)
-        );
 
   return (
     <>
@@ -107,7 +57,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {filteredNavigation.map((item) => (
+              {navigation.map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.href}
@@ -168,7 +118,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {filteredNavigation.map((item) => (
+              {navigation.map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.href}

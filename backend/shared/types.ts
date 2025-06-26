@@ -4,6 +4,7 @@ export interface User {
   role: 'admin' | 'owner' | 'worker' | 'user';
   permanent?: boolean;
   createdAt: string;
+  shop_id?: string;
 }
 
 export interface Transaction {
@@ -21,6 +22,7 @@ export interface Transaction {
   partsCost: PartCost[];
   createdAt: string;
   createdBy: number;
+  shop_id?: string;
 }
 
 export interface PartCost {
@@ -38,6 +40,7 @@ export interface Supplier {
   totalDue: number;
   totalRemaining: number;
   createdAt: string;
+  shop_id?: string;
 }
 
 export interface Expenditure {
@@ -47,6 +50,7 @@ export interface Expenditure {
   description: string;
   remaining: number;
   createdAt: string;
+  shop_id?: string;
 }
 
 export interface Payment {
@@ -57,6 +61,7 @@ export interface Payment {
   description: string;
   createdAt: string;
   createdBy: number;
+  shop_id?: string;
 }
 
 export interface Bill {
@@ -73,6 +78,7 @@ export interface Bill {
   pdfUrl?: string;
   createdAt: string;
   createdBy: number;
+  shop_id?: string;
 }
 
 export interface AuthResponse {

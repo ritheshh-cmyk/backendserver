@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -62,8 +62,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useConnection } from "@/contexts/ConnectionContext";
 
 interface Transaction {
   id: string;
@@ -73,13 +71,79 @@ interface Transaction {
   device: string;
   repairType: string;
   cost: number;
-  amount?: number;
   profit: number;
   status: "pending" | "in-progress" | "completed" | "delivered";
   paymentMethod: "cash" | "upi" | "card" | "bank-transfer";
   freeGlass: boolean;
-  supplier?: string;
 }
+
+const mockTransactions: Transaction[] = [
+  {
+    id: "TXN-001",
+    date: new Date("2024-01-15"),
+    customer: "Rajesh Kumar",
+    phone: "+91 98765 43210",
+    device: "iPhone 14 Pro",
+    repairType: "screen-replacement",
+    cost: 12500,
+    profit: 4500,
+    status: "completed",
+    paymentMethod: "upi",
+    freeGlass: true,
+  },
+  {
+    id: "TXN-002",
+    date: new Date("2024-01-15"),
+    customer: "Priya Sharma",
+    phone: "+91 98765 43211",
+    device: "Samsung Galaxy S23",
+    repairType: "battery-replacement",
+    cost: 3500,
+    profit: 1500,
+    status: "in-progress",
+    paymentMethod: "cash",
+    freeGlass: false,
+  },
+  {
+    id: "TXN-003",
+    date: new Date("2024-01-14"),
+    customer: "Mohammed Ali",
+    phone: "+91 98765 43212",
+    device: "OnePlus 11",
+    repairType: "charging-port",
+    cost: 4500,
+    profit: 2000,
+    status: "pending",
+    paymentMethod: "card",
+    freeGlass: false,
+  },
+  {
+    id: "TXN-004",
+    date: new Date("2024-01-14"),
+    customer: "Sunita Devi",
+    phone: "+91 98765 43213",
+    device: "iPhone 13",
+    repairType: "screen-replacement",
+    cost: 15000,
+    profit: 5500,
+    status: "completed",
+    paymentMethod: "bank-transfer",
+    freeGlass: true,
+  },
+  {
+    id: "TXN-005",
+    date: new Date("2024-01-13"),
+    customer: "Arjun Reddy",
+    phone: "+91 98765 43214",
+    device: "Google Pixel 7",
+    repairType: "camera-repair",
+    cost: 8500,
+    profit: 3500,
+    status: "delivered",
+    paymentMethod: "upi",
+    freeGlass: false,
+  },
+];
 
 const statusConfig = {
   pending: { label: "pending", color: "status-pending" },
@@ -89,8 +153,7 @@ const statusConfig = {
 };
 
 export default function Transactions() {
-  const queryClient = useQueryClient();
-  const { socket } = useConnection();
+  const [data, setData] = useState(mockTransactions);
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -99,56 +162,7 @@ export default function Transactions() {
   );
   const { t } = useLanguage();
 
-  // Fetch transactions from backend
-  const { data = [], isLoading, isError } = useQuery<Transaction[]>(
-    ["transactions"],
-    async () => {
-      const res = await fetch("/api/transactions");
-      if (!res.ok) throw new Error("Failed to fetch transactions");
-      const json = await res.json();
-      // Convert date strings to Date objects
-      return json.map((tx: any) => ({ ...tx, date: new Date(tx.date) }));
-    },
-    { refetchOnWindowFocus: false }
-  );
-
-  // Real-time updates
-  useEffect(() => {
-    if (!socket) return;
-    const onCreated = (transaction: Transaction) => {
-      queryClient.setQueryData<Transaction[]>(["transactions"], (old = []) => [transaction, ...old]);
-      toast({ title: "Transaction Created", description: transaction.id });
-    };
-    const onUpdated = (transaction: Transaction) => {
-      queryClient.setQueryData<Transaction[]>(["transactions"], (old = []) =>
-        old.map((tx) => (tx.id === transaction.id ? transaction : tx))
-      );
-      toast({ title: "Transaction Updated", description: transaction.id });
-    };
-    const onDeleted = (id: string) => {
-      queryClient.setQueryData<Transaction[]>(["transactions"], (old = []) =>
-        old.filter((tx) => tx.id !== id)
-      );
-      toast({ title: "Transaction Deleted", description: id, variant: "destructive" });
-    };
-    socket.on("transactionCreated", onCreated);
-    socket.on("transactionUpdated", onUpdated);
-    socket.on("transactionDeleted", onDeleted);
-    return () => {
-      socket.off("transactionCreated", onCreated);
-      socket.off("transactionUpdated", onUpdated);
-      socket.off("transactionDeleted", onDeleted);
-    };
-  }, [socket, queryClient]);
-
   const columnHelper = createColumnHelper<Transaction>();
-
-  // Defensive profit calculation and summary
-  const safeData: Transaction[] = Array.isArray(data) ? data : [];
-  const totalProfit = safeData.reduce(
-    (sum, tx) => sum + (tx.profit ?? ((tx.amount ?? 0) - (tx.cost ?? 0))),
-    0
-  );
 
   const columns = useMemo(
     () => [
@@ -164,7 +178,7 @@ export default function Transactions() {
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="font-mono text-sm">{row.getValue("id") || "N/A"}</div>
+          <div className="font-mono text-sm">{row.getValue("id")}</div>
         ),
       }),
       columnHelper.accessor("date", {
@@ -178,19 +192,20 @@ export default function Transactions() {
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => {
-          const date = row.getValue<Date>("date");
-          return <div className="text-sm">{date ? date.toLocaleDateString() : "N/A"}</div>;
-        },
+        cell: ({ row }) => (
+          <div className="text-sm">
+            {row.getValue<Date>("date").toLocaleDateString()}
+          </div>
+        ),
       }),
       columnHelper.accessor("customer", {
         header: "Customer",
         cell: ({ row }) => (
           <div>
-            <div className="font-medium">{row.getValue("customer") || "Unknown"}</div>
+            <div className="font-medium">{row.getValue("customer")}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" />
-              {row.original.phone || "N/A"}
+              {row.original.phone}
             </div>
           </div>
         ),
@@ -199,9 +214,9 @@ export default function Transactions() {
         header: "Device",
         cell: ({ row }) => (
           <div>
-            <div className="font-medium">{row.getValue("device") || "N/A"}</div>
+            <div className="font-medium">{row.getValue("device")}</div>
             <div className="text-xs text-muted-foreground">
-              {t(row.original.repairType) || "N/A"}
+              {t(row.original.repairType)}
             </div>
           </div>
         ),
@@ -220,27 +235,14 @@ export default function Transactions() {
         cell: ({ row }) => (
           <div className="text-right">
             <div className="font-semibold">
-              ₹{(row.getValue<number>("cost") ?? 0).toLocaleString()}
+              ₹{row.getValue<number>("cost").toLocaleString()}
             </div>
             {showProfits && (
               <div className="text-xs text-success">
-                Profit: ₹{(row.original.profit ?? ((row.original.amount ?? 0) - (row.original.cost ?? 0))).toLocaleString()}
+                Profit: ₹{row.original.profit.toLocaleString()}
               </div>
             )}
           </div>
-        ),
-      }),
-      columnHelper.accessor("profit", {
-        header: "Profit",
-        cell: ({ row }) => {
-          const profit = row.original.profit ?? ((row.original.amount ?? 0) - (row.original.cost ?? 0));
-          return <div className="text-success font-semibold">₹{profit.toLocaleString()}</div>;
-        },
-      }),
-      columnHelper.accessor("supplier", {
-        header: "Supplier",
-        cell: ({ row }) => (
-          <div>{row.original.supplier || "Default Supplier"}</div>
         ),
       }),
       columnHelper.accessor("status", {
@@ -271,7 +273,7 @@ export default function Transactions() {
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0" data-testid="edit-transaction">
+              <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -293,7 +295,6 @@ export default function Transactions() {
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => handleDelete(row.original.id)}
-                data-testid="delete-transaction"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete transaction
@@ -330,27 +331,13 @@ export default function Transactions() {
     globalFilterFn: "includesString",
   });
 
-  const handleDelete = async (id: string) => {
-    if (!id) {
-      toast({ title: "Delete Failed", description: "Invalid transaction ID" });
-      return;
-    }
-    try {
-      const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete transaction");
-      queryClient.setQueryData<Transaction[]>(["transactions"], (old) =>
-        (Array.isArray(old) ? old : ([] as Transaction[])).filter((tx) => tx.id !== id)
-      );
-      toast({
-        title: "Transaction Deleted",
-        description: "Transaction has been removed successfully."
-      });
-    } catch (err: any) {
-      toast({
-        title: "Delete Failed",
-        description: err.message
-      });
-    }
+  const handleDelete = (id: string) => {
+    setData((prev) => prev.filter((transaction) => transaction.id !== id));
+    toast({
+      title: "Transaction Deleted",
+      description: "Transaction has been removed successfully.",
+      variant: "destructive",
+    });
   };
 
   const toggleProfits = () => {
@@ -373,7 +360,7 @@ export default function Transactions() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 data-testid="transactions-title" className="text-2xl sm:text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
               {t("transactions")}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
@@ -386,7 +373,6 @@ export default function Transactions() {
               size="sm"
               onClick={toggleProfits}
               className="h-10 sm:h-9"
-              data-testid="toggle-profits"
             >
               {showProfits ? (
                 <EyeOff className="mr-2 h-4 w-4" />
@@ -400,13 +386,12 @@ export default function Transactions() {
               size="sm"
               onClick={exportToExcel}
               className="h-10 sm:h-9"
-              data-testid="export-transactions"
             >
               <Download className="mr-2 h-4 w-4" />
               {t("export")}
             </Button>
             <Link to="/transactions/new">
-              <Button size="sm" className="h-10 sm:h-9" data-testid="add-transaction">
+              <Button size="sm" className="h-10 sm:h-9">
                 <Plus className="mr-2 h-4 w-4" />
                 {t("new-transaction")}
               </Button>
@@ -471,7 +456,7 @@ export default function Transactions() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <Table data-testid="transactions-table">
+              <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>

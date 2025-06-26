@@ -21,25 +21,34 @@ import {
   Zap,
   Shield,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
     rememberMe: false,
   });
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock login delay
-    setTimeout(() => {
+    setError("");
+    try {
+      // Call backend login API
+      const res = await apiClient.login(formData.username, formData.password);
+      login(res.token, res.user); // Store token and user in context/localStorage
       setIsLoading(false);
-      // Redirect to dashboard (UI only)
       window.location.href = "/";
-    }, 2000);
+    } catch (err: any) {
+      setIsLoading(false);
+      setError(err.message || "Login failed");
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -125,15 +134,18 @@ export default function Login() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="text-red-500 text-sm mb-2 text-center">{error}</div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username or Email</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@repairshop.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    id="username"
+                    type="text"
+                    placeholder="admin or admin@repairshop.com"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
                     required
                     className="h-11"
                   />

@@ -31,6 +31,8 @@ class MemStorage {
   private expenditures: Expenditure[] = [];
   private groupedExpenditures: GroupedExpenditure[] = [];
   private groupedExpenditurePayments: GroupedExpenditurePayment[] = [];
+  private bills: any[] = [];
+  private feedbacks: { [billId: string]: string } = {};
 
   // User methods
   async getUserByUsername(username: string): Promise<User | null> {
@@ -42,15 +44,12 @@ class MemStorage {
   }
 
   async createUser(data: InsertUser): Promise<User> {
-    const id = this.users.length + 1;
     const user: User = {
-      id,
-      username: data.username!,
-      role: (data.role as any) || 'user',
-      permanent: data.permanent ?? false,
-      password: data.password!,
-      createdAt: new Date().toISOString(),
-    } as any;
+      id: this.users.length + 1,
+      username: data.username,
+      password: data.password,
+      shop_id: data.shop_id || null,
+    };
     this.users.push(user);
     return user;
   }
@@ -63,24 +62,25 @@ class MemStorage {
       mobileNumber: data.mobileNumber,
       deviceModel: data.deviceModel,
       repairType: data.repairType,
-      repairCost: data.repairCost?.toString() ?? "0",
-      actualCost: data.actualCost?.toString() ?? null,
-      profit: data.profit?.toString() ?? null,
-      amountGiven: data.amountGiven?.toString() ?? "0",
-      changeReturned: data.changeReturned?.toString() ?? "0",
+      repairCost: data.repairCost.toString(),
+      actualCost: data.actualCost?.toString() || null,
+      profit: data.profit?.toString() || null,
+      amountGiven: data.amountGiven.toString(),
+      changeReturned: data.changeReturned.toString(),
       paymentMethod: data.paymentMethod,
       externalStoreName: data.externalStoreName || null,
       externalItemName: data.externalItemName || null,
       externalItemCost: data.externalItemCost?.toString() || null,
       internalCost: data.internalCost?.toString() || null,
-      freeGlassInstallation: data.freeGlassInstallation ?? false,
+      freeGlassInstallation: data.freeGlassInstallation || false,
       remarks: data.remarks || null,
-      status: data.status || "completed",
-      requiresInventory: data.requiresInventory ?? false,
+      status: data.status || "Pending",
+      requiresInventory: data.requiresInventory || false,
       supplierName: data.supplierName || null,
       partsCost: data.partsCost || null,
       customSupplierName: data.customSupplierName || null,
       externalPurchases: data.externalPurchases ? JSON.stringify(data.externalPurchases) : null,
+      shop_id: data.shop_id || null,
       createdAt: new Date()
     };
     this.transactions.push(transaction);
@@ -98,10 +98,33 @@ class MemStorage {
   async updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<Transaction | null> {
     const index = this.transactions.findIndex(t => t.id === id);
     if (index === -1) return null;
+    
     const transaction = this.transactions[index];
     const updated: Transaction = {
       ...transaction,
-      ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, typeof v === 'number' ? v.toString() : v]))
+      ...(data.customerName && { customerName: data.customerName }),
+      ...(data.mobileNumber && { mobileNumber: data.mobileNumber }),
+      ...(data.deviceModel && { deviceModel: data.deviceModel }),
+      ...(data.repairType && { repairType: data.repairType }),
+      ...(data.repairCost && { repairCost: data.repairCost.toString() }),
+      ...(data.actualCost && { actualCost: data.actualCost.toString() }),
+      ...(data.profit && { profit: data.profit.toString() }),
+      ...(data.amountGiven && { amountGiven: data.amountGiven.toString() }),
+      ...(data.changeReturned && { changeReturned: data.changeReturned.toString() }),
+      ...(data.paymentMethod && { paymentMethod: data.paymentMethod }),
+      ...(data.externalStoreName && { externalStoreName: data.externalStoreName }),
+      ...(data.externalItemName && { externalItemName: data.externalItemName }),
+      ...(data.externalItemCost && { externalItemCost: data.externalItemCost.toString() }),
+      ...(data.internalCost && { internalCost: data.internalCost.toString() }),
+      ...(data.freeGlassInstallation !== undefined && { freeGlassInstallation: data.freeGlassInstallation }),
+      ...(data.remarks && { remarks: data.remarks }),
+      ...(data.status && { status: data.status }),
+      ...(data.requiresInventory !== undefined && { requiresInventory: data.requiresInventory }),
+      ...(data.supplierName && { supplierName: data.supplierName }),
+      ...(data.partsCost && { partsCost: data.partsCost }),
+      ...(data.customSupplierName && { customSupplierName: data.customSupplierName }),
+      ...(data.externalPurchases && { externalPurchases: JSON.stringify(data.externalPurchases) }),
+      ...(data.shop_id && { shop_id: data.shop_id })
     };
     this.transactions[index] = updated;
     return updated;
@@ -124,21 +147,27 @@ class MemStorage {
   }
 
   async getTransactionsByDateRange(startDate: Date, endDate: Date): Promise<Transaction[]> {
-    return this.transactions.filter(t => 
-      t.createdAt >= startDate && t.createdAt <= endDate
-    );
+    return this.transactions.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      return createdAt >= startDate && createdAt <= endDate;
+    });
   }
 
   // Stats methods
-  async getTodayStats(): Promise<any> {
+  async getTodayStats(shop_id?: string): Promise<any> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const todayTransactions = this.transactions.filter(t => 
-      t.createdAt >= today && t.createdAt < tomorrow
-    );
+    const todayTransactions = this.transactions.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      const matchesDate = createdAt >= today && createdAt < tomorrow;
+      if (shop_id) {
+        return matchesDate && t.shop_id === shop_id;
+      }
+      return matchesDate;
+    });
     
     return {
       totalTransactions: todayTransactions.length,
@@ -151,7 +180,10 @@ class MemStorage {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     
-    const weekTransactions = this.transactions.filter(t => t.createdAt >= weekAgo);
+    const weekTransactions = this.transactions.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      return createdAt >= weekAgo;
+    });
     
     return {
       totalTransactions: weekTransactions.length,
@@ -164,7 +196,10 @@ class MemStorage {
     const monthAgo = new Date();
     monthAgo.setMonth(monthAgo.getMonth() - 1);
     
-    const monthTransactions = this.transactions.filter(t => t.createdAt >= monthAgo);
+    const monthTransactions = this.transactions.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      return createdAt >= monthAgo;
+    });
     
     return {
       totalTransactions: monthTransactions.length,
@@ -177,7 +212,10 @@ class MemStorage {
     const yearAgo = new Date();
     yearAgo.setFullYear(yearAgo.getFullYear() - 1);
     
-    const yearTransactions = this.transactions.filter(t => t.createdAt >= yearAgo);
+    const yearTransactions = this.transactions.filter(t => {
+      const createdAt = new Date(t.createdAt);
+      return createdAt >= yearAgo;
+    });
     
     return {
       totalTransactions: yearTransactions.length,
@@ -192,11 +230,12 @@ class MemStorage {
       id: this.inventoryItems.length + 1,
       partName: data.partName,
       partType: data.partType,
-      compatibleDevices: data.compatibleDevices || null,
+      compatibleDevices: data.compatibleDevices || "",
       cost: data.cost.toString(),
       sellingPrice: data.sellingPrice.toString(),
       quantity: data.quantity,
       supplier: data.supplier,
+      shop_id: data.shop_id || "default",
       createdAt: new Date()
     };
     this.inventoryItems.push(item);
@@ -221,8 +260,9 @@ class MemStorage {
     const supplier: Supplier = {
       id: this.suppliers.length + 1,
       name: data.name,
-      contactNumber: data.contactNumber || null,
-      address: data.address || null,
+      contactNumber: data.contactNumber || "",
+      address: data.address || "",
+      shop_id: data.shop_id || "default",
       createdAt: new Date()
     };
     this.suppliers.push(supplier);
@@ -251,6 +291,7 @@ class MemStorage {
       unitCost: data.unitCost.toString(),
       totalCost: data.totalCost.toString(),
       status: data.status || "pending",
+      shop_id: data.shop_id || "default",
       orderDate: new Date(),
       receivedDate: null
     };
@@ -269,7 +310,8 @@ class MemStorage {
       supplierId: data.supplierId,
       amount: data.amount.toString(),
       paymentMethod: data.paymentMethod,
-      description: data.description || null,
+      description: data.description || "",
+      shop_id: data.shop_id || "default",
       paymentDate: new Date()
     };
     this.supplierPayments.push(payment);
@@ -291,10 +333,11 @@ class MemStorage {
       amount: data.amount.toString(),
       category: data.category,
       paymentMethod: data.paymentMethod,
-      recipient: data.recipient || null,
-      items: data.items || null,
+      recipient: data.recipient || "",
+      items: data.items || "",
       paidAmount: (data.paidAmount || 0).toString(),
       remainingAmount: (data.remainingAmount || 0).toString(),
+      shop_id: data.shop_id || "default",
       createdAt: new Date()
     };
     this.expenditures.push(expenditure);
@@ -321,8 +364,9 @@ class MemStorage {
       totalAmount: data.totalAmount.toString(),
       periodStart: data.periodStart,
       periodEnd: data.periodEnd,
-      description: data.description || null,
+      description: data.description || "",
       status: data.status || "pending",
+      shop_id: data.shop_id || "default",
       createdAt: new Date()
     };
     this.groupedExpenditures.push(expenditure);
@@ -363,7 +407,8 @@ class MemStorage {
       groupedExpenditureId: data.groupedExpenditureId,
       amount: data.amount.toString(),
       paymentMethod: data.paymentMethod,
-      description: data.description || null,
+      description: data.description || "",
+      shop_id: data.shop_id || "default",
       paymentDate: new Date(),
       createdAt: new Date()
     };
@@ -401,6 +446,59 @@ class MemStorage {
       });
     }
     return summary;
+  }
+
+  // Backup all shop data
+  async backupShopData(shop_id: string): Promise<any> {
+    return {
+      transactions: this.transactions.filter(t => t.shop_id === shop_id),
+      bills: (this.bills || []).filter(b => b.shop_id === shop_id),
+      expenditures: this.expenditures.filter(e => e.shop_id === shop_id),
+      suppliers: this.suppliers.filter(s => s.shop_id === shop_id),
+      inventoryItems: this.inventoryItems.filter(i => i.shop_id === shop_id),
+      payments: this.supplierPayments.filter(p => p.shop_id === shop_id),
+      groupedExpenditures: this.groupedExpenditures.filter(g => g.shop_id === shop_id),
+      groupedExpenditurePayments: this.groupedExpenditurePayments.filter(gp => gp.shop_id === shop_id),
+      feedbacks: Object.entries(this.feedbacks).filter(([billId, _]) => {
+        const bill = (this.bills || []).find(b => b.id.toString() === billId && b.shop_id === shop_id);
+        return !!bill;
+      })
+    };
+  }
+  // Restore all shop data
+  async restoreShopData(shop_id: string, data: any): Promise<void> {
+    // Replace all shop data for this shop_id
+    this.transactions = this.transactions.filter(t => t.shop_id !== shop_id).concat(data.transactions || []);
+    this.bills = (this.bills || []).filter(b => b.shop_id !== shop_id).concat(data.bills || []);
+    this.expenditures = this.expenditures.filter(e => e.shop_id !== shop_id).concat(data.expenditures || []);
+    this.suppliers = this.suppliers.filter(s => s.shop_id !== shop_id).concat(data.suppliers || []);
+    this.inventoryItems = this.inventoryItems.filter(i => i.shop_id !== shop_id).concat(data.inventoryItems || []);
+    this.supplierPayments = this.supplierPayments.filter(p => p.shop_id !== shop_id).concat(data.payments || []);
+    this.groupedExpenditures = this.groupedExpenditures.filter(g => g.shop_id !== shop_id).concat(data.groupedExpenditures || []);
+    this.groupedExpenditurePayments = this.groupedExpenditurePayments.filter(gp => gp.shop_id !== shop_id).concat(data.groupedExpenditurePayments || []);
+    for (const [billId, feedback] of (data.feedbacks || [])) {
+      this.feedbacks[billId] = feedback;
+    }
+  }
+  // Transactions by date range for shop
+  async getTransactionsByDateRangeForShop(shop_id: string, start: Date, end: Date): Promise<Transaction[]> {
+    return this.transactions.filter(t => t.shop_id === shop_id && t.createdAt >= start && t.createdAt <= end);
+  }
+  // Bills by date range for shop
+  async getBillsByDateRangeForShop(shop_id: string, start: Date, end: Date): Promise<any[]> {
+    return (this.bills || []).filter(b => b.shop_id === shop_id && b.createdAt >= start && b.createdAt <= end);
+  }
+  // Expenditures by date range for shop
+  async getExpendituresByDateRangeForShop(shop_id: string, start: Date, end: Date): Promise<Expenditure[]> {
+    return this.expenditures.filter(e => e.shop_id === shop_id && e.createdAt >= start && e.createdAt <= end);
+  }
+  // Save feedback for a bill
+  async saveFeedback(billId: string, feedback: string): Promise<void> {
+    this.feedbacks[billId] = feedback;
+  }
+  // Get feedback for a bill
+  async getFeedback(billId: string): Promise<string | null> {
+    return this.feedbacks[billId] || null;
   }
 }
 

@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  shop_id: text("shop_id").default("default"),
 });
 
 // Transaction Management
@@ -33,6 +34,7 @@ export const transactions = pgTable("transactions", {
   partsCost: decimal("parts_cost", { precision: 10, scale: 2 }),
   customSupplierName: text("custom_supplier_name"),
   externalPurchases: text("external_purchases"),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -46,6 +48,7 @@ export const inventoryItems = pgTable("inventory_items", {
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   quantity: serial("quantity").notNull(),
   supplier: text("supplier").notNull(),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -55,6 +58,7 @@ export const suppliers = pgTable("suppliers", {
   name: text("name").notNull(),
   contactNumber: varchar("contact_number", { length: 20 }),
   address: text("address"),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -67,6 +71,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
   unitCost: decimal("unit_cost", { precision: 10, scale: 2 }).notNull(),
   totalCost: decimal("total_cost", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
+  shop_id: text("shop_id").default("default"),
   orderDate: timestamp("order_date").defaultNow().notNull(),
   receivedDate: timestamp("received_date"),
 });
@@ -78,6 +83,7 @@ export const supplierPayments = pgTable("supplier_payments", {
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
   description: text("description"),
+  shop_id: text("shop_id").default("default"),
   paymentDate: timestamp("payment_date").defaultNow().notNull(),
 });
 
@@ -92,6 +98,7 @@ export const expenditures = pgTable("expenditures", {
   items: text("items"),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0").notNull(),
   remainingAmount: decimal("remaining_amount", { precision: 10, scale: 2 }).default("0").notNull(),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -105,6 +112,7 @@ export const groupedExpenditures = pgTable("grouped_expenditures", {
   periodEnd: timestamp("period_end").notNull(),
   description: text("description"),
   status: text("status").notNull().default("pending"),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -116,6 +124,7 @@ export const groupedExpenditurePayments = pgTable("grouped_expenditure_payments"
   paymentMethod: text("payment_method").notNull(),
   paymentDate: timestamp("payment_date").defaultNow().notNull(),
   description: text("description"),
+  shop_id: text("shop_id").default("default"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -150,6 +159,7 @@ export const insertTransactionSchema = z.object({
   supplierName: z.string().optional(),
   partsCost: z.string().optional(),
   customSupplierName: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertInventoryItemSchema = z.object({
@@ -160,12 +170,14 @@ export const insertInventoryItemSchema = z.object({
   sellingPrice: z.coerce.number().min(0),
   quantity: z.coerce.number().min(0),
   supplier: z.string().min(1, "Supplier is required"),
+  shop_id: z.string().optional(),
 });
 
 export const insertSupplierSchema = z.object({
   name: z.string().min(1, "Supplier name is required"),
   contactNumber: z.string().optional(),
   address: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertPurchaseOrderSchema = z.object({
@@ -175,6 +187,7 @@ export const insertPurchaseOrderSchema = z.object({
   unitCost: z.coerce.number().min(0),
   totalCost: z.coerce.number().min(0),
   status: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertSupplierPaymentSchema = z.object({
@@ -182,6 +195,7 @@ export const insertSupplierPaymentSchema = z.object({
   amount: z.coerce.number().min(0),
   paymentMethod: z.string().min(1, "Payment method is required"),
   description: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertExpenditureSchema = z.object({
@@ -193,6 +207,7 @@ export const insertExpenditureSchema = z.object({
   items: z.string().optional(),
   paidAmount: z.coerce.number().min(0).optional(),
   remainingAmount: z.coerce.number().min(0).optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertGroupedExpenditureSchema = z.object({
@@ -203,6 +218,7 @@ export const insertGroupedExpenditureSchema = z.object({
   periodEnd: z.coerce.date(),
   description: z.string().optional(),
   status: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertGroupedExpenditurePaymentSchema = z.object({
@@ -210,6 +226,7 @@ export const insertGroupedExpenditurePaymentSchema = z.object({
   amount: z.coerce.number().min(0),
   paymentMethod: z.string().min(1, "Payment method is required"),
   description: z.string().optional(),
+  shop_id: z.string().optional(),
 });
 
 export const insertUserSchema = z.object({
@@ -217,6 +234,7 @@ export const insertUserSchema = z.object({
   password: z.string().min(1, "Password is required"),
   role: z.string().min(1).optional(),
   permanent: z.boolean().optional(),
+  shop_id: z.string().optional(),
 });
 
 // Type exports
