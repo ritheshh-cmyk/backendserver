@@ -757,7 +757,7 @@ export class MemStorage implements IStorage {
       this.supplierPayments.set(paymentId, {
         id: paymentId,
         supplier,
-        amount,
+        amount: amount.toString(),
         paymentMethod,
         description: description || `Payment to ${supplier}`,
         createdAt: new Date().toISOString(),

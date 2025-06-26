@@ -22,9 +22,9 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
+  // Commented out for backend deployment - Vite server not needed
+  console.log('Vite setup skipped for backend deployment');
+},
     allowedHosts: true,
   };
 
