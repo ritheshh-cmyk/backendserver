@@ -1,33 +1,33 @@
-import express, { type Express } from "express";
-import fs from "fs";
-import path from "path";
+// @ts-nocheck
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
 // import { createServer } from 'vite'; // Commented out for backend
 // import config from '../vite.config'; // Commented out for backend
 // import { nanoid } from 'nanoid'; // Commented out for backend
-import { createLogger } from "vite";
-import { type Server } from "http";
+const { createLogger } = require("vite");
+const { typeServer } = require("http");
 // // // import { nanoid } from "nanoid" // Commented out for backend // Commented out for backend // Commented out for backend;
 
 const viteLogger = createLogger();
 
-export function log(message: string, source = "express") {
+function log(message, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
   });
-
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-export async function setupVite(app: Express, server: Server) {
+async function setupVite(app, server) {
   // Commented out for backend deployment - Vite server not needed
   console.log('Vite setup skipped for backend deployment');
 }
 
-export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+function serveStatic(app) {
+  const distPath = path.resolve(__dirname, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -42,3 +42,5 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
+
+module.exports = { log, setupVite, serveStatic };

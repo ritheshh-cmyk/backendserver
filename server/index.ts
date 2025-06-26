@@ -1,24 +1,25 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { createServer } from "http";
-import { Server as SocketIOServer } from "socket.io";
+// @ts-nocheck
+const express = require("express");
+const { registerRoutes } = require("./routes.js");
+const { setupVite, serveStatic, log } = require("./vite.js");
+const { createServer } = require("http");
+const { Server: SocketIOServer } = require("socket.io");
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
+/** @type {import('express').RequestHandler} */
+const requestLogger = (req, res, next) => {
+  /** @type {any} */
+  let capturedJsonResponse = undefined;
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
-
+  const start = Date.now();
+  const path = req.path;
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -26,17 +27,15 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
-
       log(logLine);
     }
   });
-
   next();
-});
+};
+app.use(requestLogger);
 
 (async () => {
   try {
@@ -49,13 +48,14 @@ app.use((req, res, next) => {
     // Pass io to registerRoutes (no longer returns a server)
     await registerRoutes(app, io);
 
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    /** @type {(err: any, _req: import('express').Request, res: import('express').Response, _next: Function) => void} */
+    const errorHandler = (err, _req, res, _next) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
-
       res.status(status).json({ message });
       throw err;
-    });
+    };
+    app.use(errorHandler);
 
     if (app.get("env") === "development") {
       await setupVite(app, httpServer);

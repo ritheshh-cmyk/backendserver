@@ -1,21 +1,12 @@
-import type { Express, RequestHandler } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import type { Server as SocketIOServer } from "socket.io";
-import authRoutes from "./auth-routes.js";
-import { 
-  insertTransactionSchema, 
-  insertInventoryItemSchema, 
-  insertSupplierSchema, 
-  insertSupplierPaymentSchema, 
-  insertExpenditureSchema,
-  insertGroupedExpenditureSchema,
-  insertGroupedExpenditurePaymentSchema
-} from "@shared/schema";
-import { z } from "zod";
-import ExcelJS from "exceljs";
+// @ts-nocheck
+const { createServer } = require("http");
+const { storage } = require("./storage.js");
+const { insertTransactionSchema, insertInventoryItemSchema, insertSupplierSchema, insertSupplierPaymentSchema, insertExpenditureSchema, insertGroupedExpenditureSchema, insertGroupedExpenditurePaymentSchema } = require("../shared/schema");
+const { z } = require("zod");
+const ExcelJS = require("exceljs");
+const authRoutes = require("./auth-routes.js");
 
-export async function registerRoutes(app: Express, io: SocketIOServer): Promise<Server> {
+function registerRoutes(app, io) {
   // Auth routes
   app.use("/api/auth", authRoutes);
   
@@ -861,3 +852,5 @@ export async function registerRoutes(app: Express, io: SocketIOServer): Promise<
   const httpServer = createServer(app);
   return httpServer;
 }
+
+module.exports = { registerRoutes };

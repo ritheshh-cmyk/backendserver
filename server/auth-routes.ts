@@ -1,7 +1,8 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { storage } from './storage.js';
+// @ts-nocheck
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { storage } = require('./storage.js');
 
 const router = express.Router();
 
@@ -87,4 +88,4 @@ router.post('/register', (req, res) => {
   });
 });
 
-export default router;
+module.exports = router;

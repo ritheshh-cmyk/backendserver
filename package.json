@@ -2,9 +2,8 @@
   "name": "mobile-repair-tracker-backend",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "nodemon --watch server --exec \"ts-node --loader ts-node/esm server/index.ts\"",
+    "dev": "npm run build && node dist/server/index.js",
     "build": "npx tsc",
     "start": "node dist/server/index.js"
   },
@@ -20,6 +19,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.1.5",
+    "node-fetch": "^2.7.0",
+    "open": "^10.1.2",
     "pg": "^8.16.2",
     "socket.io": "^4.8.1",
     "vite": "^7.0.0",
@@ -36,5 +37,10 @@
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
   }
 }

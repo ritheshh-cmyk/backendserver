@@ -20,8 +20,23 @@ router.post('/login', (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // For now, simple password comparison (in production, use bcrypt)
-    if ((user as any).password !== password) {
+    // Check password - handle both plain text and bcrypt hashed passwords
+    let isValidPassword = false;
+    
+    // First try plain text comparison (for default admin user)
+    if ((user as any).password === password) {
+      isValidPassword = true;
+    } else {
+      // Then try bcrypt comparison (for future users)
+      try {
+        isValidPassword = await bcrypt.compare(password, (user as any).password);
+      } catch (error) {
+        console.error('Bcrypt comparison error:', error);
+        isValidPassword = false;
+      }
+    }
+
+    if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -61,8 +76,11 @@ router.post('/register', (req, res) => {
       return res.status(409).json({ error: 'Username already exists' });
     }
 
-    // Create new user
-    const newUser = await storage.createUser({ username, password });
+    // Hash password with bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user with hashed password
+    const newUser = await storage.createUser({ username, password: hashedPassword });
 
     res.status(201).json({
       message: 'User created successfully',

@@ -1,72 +1,92 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ConnectionProvider } from "@/contexts/ConnectionContext";
+import { ThemeProvider } from "@/components/theme-provider";
 
-import React from 'react';
-import { Route, Switch } from 'wouter';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from './components/ui/toaster';
-import { useToast } from './hooks/use-toast';
-import { useMobile } from './hooks/use-mobile';
-import { MobileLayout } from './components/MobileLayout';
+// Pages
+import Login from "./pages/auth/Login";
+import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
+import NewTransaction from "./pages/NewTransaction";
+import EditTransaction from "./pages/EditTransaction";
+import Inventory from "./pages/Inventory";
+import Suppliers from "./pages/Suppliers";
+import SupplierDetails from "./pages/SupplierDetails";
+import Expenditures from "./pages/Expenditures";
+import Bills from "./pages/Bills";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 
-// Import pages
-import Dashboard from './pages/Dashboard';
-import TransactionHistory from './pages/TransactionHistory';
-import InventoryPage from './pages/InventoryPage';
-import SuppliersPage from './pages/SuppliersPage';
-import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
-import ExpenditurePage from './pages/ExpenditurePage';
-import GroupedExpendituresPage from './pages/GroupedExpendituresPage';
-import NotFound from './pages/not-found';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-// Import mobile CSS
-import './mobile.css';
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="system" storageKey="expenso-theme">
+      <LanguageProvider>
+        <ConnectionProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Authentication routes */}
+                <Route path="/login" element={<Login />} />
 
-const queryClient = new QueryClient();
+                {/* Main app routes */}
+                <Route path="/" element={<Dashboard />} />
+                <Route
+                  path="/dashboard"
+                  element={<Navigate to="/" replace />}
+                />
 
-function App() {
-  const { toast } = useToast();
-  const isMobile = useMobile();
+                {/* Transaction routes */}
+                <Route path="/transactions" element={<Transactions />} />
+                <Route path="/transactions/new" element={<NewTransaction />} />
+                <Route
+                  path="/transactions/:id/edit"
+                  element={<EditTransaction />}
+                />
 
-  if (isMobile) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MobileLayout title="Mobile Repair Tracker">
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/transactions" component={TransactionHistory} />
-            <Route path="/inventory" component={InventoryPage} />
-            <Route path="/suppliers" component={SuppliersPage} />
-            <Route path="/reports" component={ReportsPage} />
-            <Route path="/settings" component={SettingsPage} />
-            <Route path="/expenditures" component={ExpenditurePage} />
-            <Route path="/grouped-expenditures" component={GroupedExpendituresPage} />
-            <Route component={NotFound} />
-          </Switch>
-        </MobileLayout>
-        <Toaster />
-      </QueryClientProvider>
-    );
-  }
+                {/* Inventory routes */}
+                <Route path="/inventory" element={<Inventory />} />
 
-  // Desktop layout (existing)
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background">
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/transactions" component={TransactionHistory} />
-          <Route path="/inventory" component={InventoryPage} />
-          <Route path="/suppliers" component={SuppliersPage} />
-          <Route path="/reports" component={ReportsPage} />
-          <Route path="/settings" component={SettingsPage} />
-          <Route path="/expenditures" component={ExpenditurePage} />
-          <Route path="/grouped-expenditures" component={GroupedExpendituresPage} />
-          <Route component={NotFound} />
-        </Switch>
-      </div>
-      <Toaster />
-    </QueryClientProvider>
-  );
-}
+                {/* Supplier routes */}
+                <Route path="/suppliers" element={<Suppliers />} />
+                <Route path="/suppliers/:id" element={<SupplierDetails />} />
+
+                {/* Financial routes */}
+                <Route path="/expenditures" element={<Expenditures />} />
+
+                {/* Bill routes */}
+                <Route path="/bills" element={<Bills />} />
+
+                {/* Report routes */}
+                <Route path="/reports" element={<Reports />} />
+
+                {/* Settings routes */}
+                <Route path="/settings" element={<Settings />} />
+
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ConnectionProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
 
 export default App;
