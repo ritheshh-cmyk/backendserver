@@ -141,7 +141,7 @@ export class MemStorage implements IStorage {
   private inventoryItems: Map<number, InventoryItem>;
   private suppliers: Map<number, Supplier>;
   private purchaseOrders: Map<number, PurchaseOrder>;
-  private supplierPayments: Map<number, SupplierPayment>;
+  private supplierPayments: Map<string, SupplierPayment>;
   private expenditures: Map<number, Expenditure>;
   private groupedExpenditures: Map<number, GroupedExpenditure>;
   private groupedExpenditurePayments: Map<number, GroupedExpenditurePayment>;
@@ -263,8 +263,10 @@ export class MemStorage implements IStorage {
     
     if (insertTransaction.requiresInventory) {
       // External Purchase Mode: Calculate profit as Repair Cost - External Purchase Costs
-      if (insertTransaction.externalPurchases && insertTransaction.externalPurchases.length > 0) {
-        totalCost = insertTransaction.externalPurchases.reduce(function(sum: number, purchase: any) { return sum + (purchase.amount || 0); }, 0).toString();
+      if (insertTransaction.externalPurchases && Array.isArray(insertTransaction.externalPurchases) && insertTransaction.externalPurchases.length > 0) {
+        totalCost = insertTransaction.externalPurchases.reduce(function(sum: number, purchase: any) { 
+          return sum + (purchase.cost || 0); 
+        }, 0).toString();
       }
     } else {
       // Internal Repair Mode: Calculate profit as Repair Cost - Internal Cost
@@ -285,23 +287,15 @@ export class MemStorage implements IStorage {
       paymentMethod: insertTransaction.paymentMethod,
       amountGiven: insertTransaction.amountGiven?.toString() || "0",
       changeReturned: insertTransaction.changeReturned?.toString() || "0",
-      freeGlassInstallation: insertTransaction.freeGlassInstallation || false,
-      remarks: insertTransaction.remarks || null,
       status: insertTransaction.status || "completed",
-      requiresInventory: insertTransaction.requiresInventory || false,
-      supplierName: insertTransaction.supplierName || null,
+      remarks: insertTransaction.remarks || "",
       partsCost: insertTransaction.externalPurchases ? JSON.stringify(insertTransaction.externalPurchases) : 
                  JSON.stringify({
                    internalCost: insertTransaction.internalCost || 0,
                    type: 'internal'
                  }),
-      customSupplierName: insertTransaction.customSupplierName || null,
-      externalStoreName: insertTransaction.externalStoreName || null,
-      externalItemName: insertTransaction.externalItemName || null,
-      externalItemCost: insertTransaction.externalItemCost?.toString() || null,
-      externalPurchases: insertTransaction.externalPurchases ? JSON.stringify(insertTransaction.externalPurchases) : null,
-      internalCost: insertTransaction.internalCost?.toString() || "0",
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
+      createdBy: 1,
     };
     
     this.transactions.set(id, transaction);
@@ -606,7 +600,7 @@ export class MemStorage implements IStorage {
 
   // Supplier payment methods
   async createSupplierPayment(insertPayment: InsertSupplierPayment): Promise<SupplierPayment> {
-    const paymentId = this.supplierPayments.size + 1;
+    const paymentId = (this.supplierPayments.size + 1).toString();
     const payment: SupplierPayment = {
       ...insertPayment,
       id: paymentId,
@@ -759,7 +753,7 @@ export class MemStorage implements IStorage {
         this.expenditures.set(exp.id, exp);
       }
       // Record payment in history
-      const paymentId = this.supplierPayments.size + 1;
+      const paymentId = (this.supplierPayments.size + 1).toString();
       this.supplierPayments.set(paymentId, {
         id: paymentId,
         supplier,

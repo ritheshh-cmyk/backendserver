@@ -28,6 +28,8 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true,
   };
 
+  // Commented out for backend deployment - Vite server not needed
+  /*
   const vite = await createViteServer({
     // ...viteConfig,
     configFile: false,
@@ -73,6 +75,7 @@ export async function setupVite(app: Express, server: Server) {
       next(e);
     }
   });
+  */
 }
 
 export function serveStatic(app: Express) {
