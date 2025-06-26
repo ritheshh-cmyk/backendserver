@@ -1,5 +1,5 @@
 import { pgTable, text, serial, decimal, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod" // Uncommented for backend
+// import { createInsertSchema } from "drizzle-zod"; // Commented out due to compatibility issues
 import { z } from "zod";
 
 export const transactions = pgTable("transactions", {
@@ -120,10 +120,7 @@ const externalPurchaseSchema = z.object({
   customStore: z.string().optional()
 });
 
-export const insertTransactionSchema = createInsertSchema(transactions).omit({
-  id: true,
-  createdAt: true,
-}).extend({
+export const insertTransactionSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
   mobileNumber: z.string().min(1, "Mobile number is required"),
   deviceModel: z.string().min(1, "Device model is required"),
@@ -140,61 +137,62 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   internalCost: z.coerce.number().min(0).optional(),
 });
 
-export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  cost: z.coerce.number().min(0),
-  sellingPrice: z.coerce.number().min(0),
-  quantity: z.coerce.number().min(0),
+export const insertInventoryItemSchema = z.object({
+  partName: z.string().min(1, "Part name is required"),
+  partType: z.string().min(1, "Part type is required"),
+  compatibleDevices: z.string().optional(),
+  cost: z.coerce.number().min(0, "Cost must be 0 or greater"),
+  sellingPrice: z.coerce.number().min(0, "Selling price must be 0 or greater"),
+  quantity: z.coerce.number().min(0, "Quantity must be 0 or greater"),
+  supplier: z.string().min(1, "Supplier is required"),
 });
 
-export const insertSupplierSchema = createInsertSchema(suppliers).omit({
-  id: true,
-  createdAt: true,
+export const insertSupplierSchema = z.object({
+  name: z.string().min(1, "Supplier name is required"),
+  contactNumber: z.string().optional(),
+  address: z.string().optional(),
 });
 
-export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit({
-  id: true,
-  orderDate: true,
-  receivedDate: true,
-}).extend({
-  quantity: z.coerce.number().min(1),
-  unitCost: z.coerce.number().min(0),
-  totalCost: z.coerce.number().min(0),
+export const insertPurchaseOrderSchema = z.object({
+  supplierId: z.coerce.number().min(1, "Supplier ID is required"),
+  itemName: z.string().min(1, "Item name is required"),
+  quantity: z.coerce.number().min(1, "Quantity must be 1 or greater"),
+  unitCost: z.coerce.number().min(0, "Unit cost must be 0 or greater"),
+  totalCost: z.coerce.number().min(0, "Total cost must be 0 or greater"),
 });
 
-export const insertSupplierPaymentSchema = createInsertSchema(supplierPayments).omit({
-  id: true,
-  paymentDate: true,
-}).extend({
-  amount: z.coerce.number().min(0),
+export const insertSupplierPaymentSchema = z.object({
+  supplierId: z.coerce.number().min(1, "Supplier ID is required"),
+  amount: z.coerce.number().min(0, "Amount must be 0 or greater"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  description: z.string().optional(),
 });
 
-export const insertExpenditureSchema = createInsertSchema(expenditures).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  amount: z.coerce.number().min(0),
+export const insertExpenditureSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.coerce.number().min(0, "Amount must be 0 or greater"),
+  category: z.string().min(1, "Category is required"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  recipient: z.string().optional(),
+  items: z.string().optional(),
   paidAmount: z.coerce.number().min(0).optional(),
   remainingAmount: z.coerce.number().min(0).optional(),
 });
 
-export const insertGroupedExpenditureSchema = createInsertSchema(groupedExpenditures).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  totalAmount: z.coerce.number().min(0),
+export const insertGroupedExpenditureSchema = z.object({
+  providerName: z.string().min(1, "Provider name is required"),
+  category: z.string().min(1, "Category is required"),
+  totalAmount: z.coerce.number().min(0, "Total amount must be 0 or greater"),
   periodStart: z.coerce.date(),
   periodEnd: z.coerce.date(),
 });
 
-export const insertGroupedExpenditurePaymentSchema = createInsertSchema(groupedExpenditurePayments).omit({
-  id: true,
-  paymentDate: true,
-  createdAt: true,
-}).extend({
-  amount: z.coerce.number().min(0),
+export const insertGroupedExpenditurePaymentSchema = z.object({
+  groupedExpenditureId: z.coerce.number().min(1, "Grouped expenditure ID is required"),
+  amount: z.coerce.number().min(0, "Amount must be 0 or greater"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  paymentDate: z.coerce.date(),
+  description: z.string().optional(),
 });
 
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
@@ -221,9 +219,9 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
