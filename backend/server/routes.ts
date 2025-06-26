@@ -1,8 +1,8 @@
 import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage.js";
+import { storage } from "./storage";
 import type { Server as SocketIOServer } from "socket.io";
-import authRoutes from "./auth-routes.js";
+import authRoutes from "./auth-routes";
 import { 
   insertTransactionSchema, 
   insertInventoryItemSchema, 
@@ -11,7 +11,7 @@ import {
   insertExpenditureSchema,
   insertGroupedExpenditureSchema,
   insertGroupedExpenditurePaymentSchema
-} from "../shared/schema.js";
+} from "../shared/schema";
 import { z } from "zod";
 import ExcelJS from "exceljs";
 

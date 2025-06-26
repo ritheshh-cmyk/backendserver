@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { registerRoutes } from './routes.js';
+import { registerRoutes } from './routes';
 
 const app = express();
 const server = createServer(app);

@@ -1,7 +1,8 @@
 export interface User {
   id: number;
   username: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'owner' | 'worker' | 'user';
+  permanent?: boolean;
   createdAt: string;
 }
 

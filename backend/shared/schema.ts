@@ -215,6 +215,8 @@ export const insertGroupedExpenditurePaymentSchema = z.object({
 export const insertUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
+  role: z.string().min(1).optional(),
+  permanent: z.boolean().optional(),
 });
 
 // Type exports
