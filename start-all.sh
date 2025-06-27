@@ -2,8 +2,8 @@
 
 # === CONFIGURATION ===
 # Set the path to your backend directory and update-ngrok-gist.sh script
-BACKEND_DIR="/path/to/your/backend"  # <-- Change this to your backend path
-UPDATE_GIST_SCRIPT="/path/to/update-ngrok-gist.sh"  # <-- Change this to your script path
+BACKEND_DIR="/root/backendserver/backend"
+UPDATE_GIST_SCRIPT="/root/backendserver/update-ngrok-gist.sh"
 
 # Start backend (adjust the command as needed)
 cd "$BACKEND_DIR"
