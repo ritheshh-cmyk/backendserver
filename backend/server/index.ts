@@ -13,9 +13,21 @@ const io = new Server(server, {
   }
 });
 
-// Strict CORS for http://localhost:8080 with all required headers
+// CORS whitelist for local and ngrok frontend
+const whitelist = [
+  'http://localhost:8080',
+  'https://bc78-2409-40f0-1197-6f97-5c0a-ead7-a1b1-21fa.ngrok-free.app' // <-- Replace with your current ngrok URL
+];
+
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: function (origin, callback) {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('❌ CORS Blocked:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
   credentials: true
@@ -23,7 +35,10 @@ app.use(cors({
 
 // Explicitly handle OPTIONS preflight requests for all routes
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
+  const origin = req.headers.origin;
+  if (whitelist.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
   res.header('Access-Control-Allow-Credentials', 'true');
