@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "backendserver",
-      script: "./server.js",
+      script: "./server.mjs",
       watch: true,
       env: {
         NODE_ENV: "production"
