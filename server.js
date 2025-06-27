@@ -37,7 +37,7 @@ app.get('/api/ping', (req, res) => {
   res.send('pong');
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server on all interfaces for public access
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend API running on port ${PORT}`);
 }); 
