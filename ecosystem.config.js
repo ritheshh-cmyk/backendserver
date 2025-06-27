@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "backendserver",
       script: "./server.mjs",
-      watch: true,
+      watch: false,
       env: {
         NODE_ENV: "production"
       }
@@ -12,6 +12,11 @@ module.exports = {
       name: "duckdns-updater",
       script: "./duckdns-updater.sh",
       interpreter: "/data/data/com.termux/files/usr/bin/bash"
+    },
+    {
+      name: "ngrok",
+      script: "./ngrok",
+      args: "http 3000"
     }
   ]
 } 
