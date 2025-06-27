@@ -8,6 +8,11 @@ const PORT = 3000;
 const adapter = new JSONFile('db.json');
 const db = new Low(adapter);
 
+// Set default data if db.json is empty
+await db.read();
+db.data ||= { expenses: [] };
+await db.write();
+
 // Middleware
 app.use(express.json());
 
@@ -20,7 +25,7 @@ app.use((req, res, next) => {
 // API endpoint example
 app.post('/api/expense', async (req, res) => {
   await db.read();
-  db.data = db.data || { expenses: [] };
+  db.data ||= { expenses: [] };
   db.data.expenses.push({ ...req.body, timestamp: Date.now() });
   await db.write();
   console.log('Data saved:', req.body);
