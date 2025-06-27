@@ -13,7 +13,7 @@ const io = new Server(server, {
   }
 });
 
-// Enable CORS for http://localhost:8080 with all required headers
+// Strict CORS for http://localhost:8080 with all required headers
 app.use(cors({
   origin: 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -22,12 +22,13 @@ app.use(cors({
 }));
 
 // Explicitly handle OPTIONS preflight requests for all routes
-app.options('*', cors({
-  origin: 'http://localhost:8080',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
-  credentials: true
-}));
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // Middleware
 app.use(express.json());
