@@ -196,4 +196,59 @@ This project now supports running a self-hosted backend API on Android devices u
 
 ---
 
-Built with ❤️ for mobile repair shops worldwide. 
+Built with ❤️ for mobile repair shops worldwide.
+
+# backendserver
+
+## Features
+
+- Node.js Express API on port 3000
+- Local JSON database (lowdb)
+- Public access via https://rithesh.duckdns.org/api/...
+- Automatic DuckDNS IP update every 5 minutes
+- Always-on with PM2 (auto-restart, boot persistence)
+- Developer-friendly logs
+
+## Setup Steps (on Android/Termux)
+
+1. Install Termux from F-Droid.
+2. Update and install dependencies:
+   ```
+   pkg update -y
+   pkg upgrade -y
+   pkg install -y nodejs git curl
+   npm install -g pm2
+   ```
+3. Clone this repo and enter it:
+   ```
+   git clone https://github.com/ritheshh-cmyk/backendserver.git
+   cd backendserver
+   ```
+4. Install project dependencies:
+   ```
+   npm install
+   ```
+5. Start everything with PM2:
+   ```
+   pm2 start ecosystem.config.js
+   pm2 save
+   pm2 startup
+   ```
+6. (Optional) Prevent sleep:
+   ```
+   termux-wake-lock
+   ```
+7. Access your API at: https://rithesh.duckdns.org/api/expense
+
+## Logs
+
+- View logs with:
+  ```
+  pm2 logs
+  ```
+
+## Notes
+
+- The server and database work offline.
+- DuckDNS updater keeps your domain pointed to your current public IP.
+- PM2 ensures everything restarts after reboot or crash. 
