@@ -3,6 +3,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { registerRoutes } from './routes';
+import { storage } from './storage';
 
 const app = express();
 const server = createServer(app);
@@ -16,7 +17,7 @@ const io = new Server(server, {
 // CORS whitelist for local and ngrok frontend
 const whitelist = [
   'http://localhost:8080',
-  'https://bc78-2409-40f0-1197-6f97-5c0a-ead7-a1b1-21fa.ngrok-free.app' // <-- Replace with your current ngrok URL
+  'https://56cb-2409-40f0-1197-6f97-5c0a-ead7-a1b1-21fa.ngrok-free.app' // <-- Update to your current ngrok URL
 ];
 
 app.use(cors({
@@ -67,6 +68,18 @@ const startServer = async () => {
         console.log('Client disconnected:', socket.id);
       });
     });
+
+    // Ensure admin user exists and has password admin123
+    (async () => {
+      const admin = await storage.getUserByUsername('admin');
+      if (!admin) {
+        await storage.createUser({ username: 'admin', password: 'admin123' });
+        console.log('✅ Default admin user created: admin/admin123');
+      } else {
+        admin.password = 'admin123'; // For dev only; hash if needed for prod
+        console.log('✅ Default admin user password reset to admin123');
+      }
+    })();
 
     const PORT = process.env.PORT || 10000;
 
