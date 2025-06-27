@@ -13,8 +13,10 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
+// Enable CORS for all origins
 app.use(cors());
+
+// Middleware
 app.use(express.json());
 
 // Basic health check
