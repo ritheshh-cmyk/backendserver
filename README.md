@@ -190,6 +190,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Advanced inventory management
 - [ ] Multi-language support
 
+# Termux/Phone Self-Hosted Backend Setup
+
+This project now supports running a self-hosted backend API on Android devices using Termux. All scripts for running the backend server, DuckDNS updater, and PM2 process management are located in the `scripts/` directory. See `scripts/README.md` for setup instructions.
+
 ---
 
 Built with ❤️ for mobile repair shops worldwide. 
