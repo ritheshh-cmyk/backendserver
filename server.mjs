@@ -5,14 +5,12 @@ import { JSONFile } from 'lowdb/node';
 const app = express();
 const PORT = 3000;
 
-// Setup lowdb
+// Setup lowdb with default data
 const adapter = new JSONFile('db.json');
-const db = new Low(adapter);
+const db = new Low(adapter, { expenses: [] });
 
 async function startServer() {
-  // Set default data if db.json is empty
   await db.read();
-  db.data ||= { expenses: [] };
   await db.write();
 
   // Middleware
@@ -27,7 +25,6 @@ async function startServer() {
   // API endpoint example
   app.post('/api/expense', async (req, res) => {
     await db.read();
-    db.data ||= { expenses: [] };
     db.data.expenses.push({ ...req.body, timestamp: Date.now() });
     await db.write();
     console.log('Data saved:', req.body);
