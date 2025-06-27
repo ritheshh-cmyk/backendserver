@@ -13,7 +13,18 @@ const port = 5000;
 // Database connection
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-app.use(cors());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 
 // Serve static files from client directory
