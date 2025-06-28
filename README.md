@@ -309,6 +309,9 @@ A Node.js backend server for mobile repair tracking with PM2 process management,
 
 # Setup auto-start on boot
 ./setup-auto-start.sh
+
+# Update to latest version
+./update-backend.sh
 ```
 
 ### Windows/PowerShell
@@ -326,6 +329,7 @@ A Node.js backend server for mobile repair tracking with PM2 process management,
 - **npm** (comes with Node.js)
 - **curl** (for health checks)
 - **PM2** (installed automatically by setup scripts)
+- **git** (for self-update feature)
 - **Optional**: ngrok or DuckDNS for public access
 - **Optional**: Telegram bot token for notifications
 
@@ -394,6 +398,14 @@ DB_FILE=db.json
 
 This will add the backend start command to your `~/.bashrc` so it starts automatically when you open Ubuntu-in-Termux.
 
+### 5. Self-Update (Ubuntu-in-Termux)
+
+```bash
+./update-backend.sh
+```
+
+This will check for updates, pull the latest changes, install new dependencies, and restart the services automatically.
+
 ## 🛡️ Safety Features
 
 ### Error Handling
@@ -402,12 +414,19 @@ This will add the backend start command to your `~/.bashrc` so it starts automat
 - **Port conflict detection** - Warn if port 10000 is already in use
 - **File existence checks** - Ensure required files exist before proceeding
 - **Graceful fallbacks** - Handle missing commands like `timeout`
+- **Process cleanup** - Automatic cleanup of test processes with traps
 
 ### Security
 - **Silent npm installs** - Reduce log noise and potential security exposure
 - **Absolute paths** - Use `./script.sh` instead of relative paths
 - **Environment validation** - Check and validate environment variables
 - **PM2 Termux support** - Proper startup configuration for Termux environments
+- **PM2 verification** - Verify PM2 is accessible after installation
+
+### Visual Organization
+- **Emoji sections** - Clear visual separation of setup phases
+- **Color-coded output** - Easy to read success/warning/error messages
+- **Progress indicators** - Step-by-step setup progress
 
 ## 📊 Management Commands
 
@@ -427,12 +446,26 @@ pm2 stop all
 
 # Delete all services
 pm2 delete all
+
+# Save current configuration
+pm2 save
 ```
 
 ### Server Health Check
 ```bash
 # Test if backend is responding
 curl http://localhost:10000/api/ping
+```
+
+### Update Commands
+```bash
+# Check for updates
+./update-backend.sh
+
+# Manual update (if needed)
+git pull origin main
+npm install
+pm2 restart all
 ```
 
 ## 🔍 Troubleshooting
@@ -479,6 +512,11 @@ sudo apt-get install coreutils
 - Try: `pm2 startup termux` for Termux environments
 - Check if running as root (may be required for startup)
 
+#### 9. Update script fails
+- Ensure you're in a git repository
+- Check if git is installed: `git --version`
+- Verify remote repository is configured: `git remote -v`
+
 ### Log Files
 - `backendserver.log` - Server output
 - `backendserver-error.log` - Server errors
@@ -516,6 +554,7 @@ MobileRepairTracker-1/
 ├── setup-backend.sh           # Ubuntu/Termux setup script
 ├── setup-backend.ps1          # Windows setup script
 ├── setup-auto-start.sh        # Auto-start setup script
+├── update-backend.sh          # Self-update script
 ├── duckdns-updater.sh         # DuckDNS updater script
 ├── scripts/
 │   └── telegram-bot.js        # Telegram bot script
@@ -538,7 +577,8 @@ If you encounter issues:
 3. Verify your .env configuration
 4. Test the server manually: `node server.mjs`
 5. Run setup script again: `./setup-backend.sh`
+6. Try updating: `./update-backend.sh`
 
 ---
 
-**Your backend is now ready for production use with enhanced safety and error handling! 🎉** 
+**Your backend is now ready for production use with enhanced safety, error handling, and self-update capabilities! 🎉** 

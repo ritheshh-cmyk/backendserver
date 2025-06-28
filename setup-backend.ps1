@@ -33,7 +33,8 @@ if (-not (Test-Path "server.mjs")) {
     exit 1
 }
 
-Write-Status "Checking system requirements..."
+Write-Host ""
+Write-Host "🔍 Checking System Requirements..." -ForegroundColor Magenta
 
 # Check Node.js
 try {
@@ -64,6 +65,9 @@ try {
     # Port is not in use, which is good
 }
 
+Write-Host ""
+Write-Host "📦 Installing Dependencies..." -ForegroundColor Magenta
+
 Write-Status "Installing dependencies..."
 try {
     npm install --silent
@@ -72,6 +76,9 @@ try {
     Write-Error "Failed to install dependencies"
     exit 1
 }
+
+Write-Host ""
+Write-Host "⚙️  Setting up PM2..." -ForegroundColor Magenta
 
 # Install PM2 globally if not installed
 try {
@@ -87,6 +94,18 @@ try {
         exit 1
     }
 }
+
+# Verify PM2 is accessible after install
+try {
+    $pm2Version = pm2 --version
+    Write-Success "PM2 verified and accessible"
+} catch {
+    Write-Error "PM2 was installed but is not accessible. Try restarting your shell or checking PATH."
+    exit 1
+}
+
+Write-Host ""
+Write-Host "⚙️  Configuring Environment..." -ForegroundColor Magenta
 
 # Create .env file if it doesn't exist
 if (Test-Path ".env") {
@@ -139,6 +158,9 @@ DB_FILE=db.json
     Write-Success ".env file created. Please edit it with your actual values."
 }
 
+Write-Host ""
+Write-Host "🧪 Testing Server Startup..." -ForegroundColor Magenta
+
 # Test the server
 Write-Status "Testing server startup..."
 try {
@@ -167,6 +189,9 @@ try {
     Write-Warning "Could not test server startup"
 }
 
+Write-Host ""
+Write-Host "🚀 Setting up PM2 Startup..." -ForegroundColor Magenta
+
 Write-Status "Setting up PM2 startup script..."
 try {
     pm2 startup
@@ -174,6 +199,9 @@ try {
 } catch {
     Write-Warning "PM2 startup configuration failed (this is normal in some environments)"
 }
+
+Write-Status "Saving current PM2 process list..."
+pm2 save
 
 Write-Host ""
 Write-Host "🎉 Backend setup complete!" -ForegroundColor Green

@@ -34,7 +34,8 @@ if [ ! -f "server.mjs" ]; then
     exit 1
 fi
 
-print_status "Checking system requirements..."
+echo ""
+echo "🔍 Checking System Requirements..."
 
 # Check Node.js
 if ! command -v node &> /dev/null; then
@@ -76,6 +77,9 @@ if lsof -i :10000 &>/dev/null; then
     print_status "You may need to stop the existing service or change the port in .env"
 fi
 
+echo ""
+echo "📦 Installing Dependencies..."
+
 print_status "Installing dependencies..."
 npm install --silent
 if [ $? -eq 0 ]; then
@@ -84,6 +88,9 @@ else
     print_error "Failed to install dependencies"
     exit 1
 fi
+
+echo ""
+echo "⚙️  Setting up PM2..."
 
 # Install PM2 globally if not installed
 if ! command -v pm2 &> /dev/null; then
@@ -99,6 +106,15 @@ else
     PM2_VERSION=$(pm2 --version)
     print_success "PM2 found: $PM2_VERSION"
 fi
+
+# Verify PM2 is accessible after install
+if ! command -v pm2 &> /dev/null; then
+    print_error "PM2 was installed but is not accessible. Try restarting your shell or checking PATH."
+    exit 1
+fi
+
+echo ""
+echo "⚙️  Configuring Environment..."
 
 # Create .env file if it doesn't exist
 if [ -f ".env" ]; then
@@ -151,27 +167,40 @@ EOF
     print_success ".env file created. Please edit it with your actual values."
 fi
 
+echo ""
+echo "🔧 Setting up Scripts..."
+
 # Make scripts executable with absolute paths
 print_status "Making scripts executable..."
 chmod +x ./start-backend-server.sh ./duckdns-updater.sh ./setup-auto-start.sh
 
+echo ""
+echo "🧪 Testing Server Startup..."
+
 # Test the server
 print_status "Testing server startup..."
 if command -v timeout &> /dev/null; then
+    # Set up trap to clean up server process on exit
+    trap 'kill $SERVER_PID 2>/dev/null' EXIT
+    
     timeout 10s node server.mjs &
     SERVER_PID=$!
     sleep 3
 
     if curl -s http://localhost:10000/api/ping > /dev/null; then
         print_success "Server test successful - backend is responding"
-        kill $SERVER_PID 2>/dev/null
     else
         print_warning "Server test failed - backend may not be responding"
-        kill $SERVER_PID 2>/dev/null
     fi
+    
+    # Clean up trap
+    trap - EXIT
 else
     print_warning "Skipping server test (timeout command not available)"
 fi
+
+echo ""
+echo "🚀 Setting up Auto-Start..."
 
 # Setup auto-start
 print_status "Setting up auto-start..."
@@ -182,6 +211,9 @@ if ! pm2 startup; then
     print_warning "Trying Termux-specific startup setup..."
     pm2 startup termux || print_warning "PM2 startup setup may need manual configuration"
 fi
+
+print_status "Saving current PM2 process list..."
+pm2 save
 
 echo ""
 echo "🎉 Backend setup complete!"
