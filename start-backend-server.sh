@@ -24,7 +24,7 @@ fi
 
 # Start PM2 processes
 echo "🔄 Starting PM2 processes..."
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # Wait a moment for processes to start
 sleep 3
