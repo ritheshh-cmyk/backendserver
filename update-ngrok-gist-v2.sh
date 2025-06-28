@@ -26,11 +26,47 @@ elif [[ "$1" == "--help" ]]; then
     exit 0
 fi
 
-# Ensure GitHub token is set
-if [ -z "$GITHUB_TOKEN" ]; then
-  echo "❌ GITHUB_TOKEN is not set. Please export it before running."
-  echo "   You can also create a .env file with: GITHUB_TOKEN=your_token_here"
-  exit 1
+# Function to detect GitHub token from various sources
+detect_github_token() {
+    # Check environment variable first
+    if [ -n "$GITHUB_TOKEN" ]; then
+        echo "✅ GitHub token found in environment variable"
+        return 0
+    fi
+    
+    # Check if GitHub CLI is authenticated
+    if command -v gh &> /dev/null; then
+        if gh auth status &> /dev/null; then
+            echo "✅ GitHub CLI is authenticated"
+            return 0
+        fi
+    fi
+    
+    # Check git config for token
+    if git config --global --get user.name &> /dev/null; then
+        echo "✅ Git is configured globally"
+        return 0
+    fi
+    
+    return 1
+}
+
+# Ensure GitHub token is available
+if ! detect_github_token; then
+    echo "❌ GitHub token not found. Please set it up:"
+    echo ""
+    echo "Method 1 - Environment variable:"
+    echo "  export GITHUB_TOKEN=your_token_here"
+    echo ""
+    echo "Method 2 - Add to .bashrc:"
+    echo "  echo 'export GITHUB_TOKEN=your_token_here' >> ~/.bashrc"
+    echo ""
+    echo "Method 3 - Git config:"
+    echo "  git config --global user.name 'Your Name'"
+    echo "  git config --global user.email 'your-email@example.com'"
+    echo ""
+    echo "🔗 Get a token from: https://github.com/settings/tokens (need 'gist' permission)"
+    exit 1
 fi
 
 # Create logs directory
@@ -76,6 +112,42 @@ restart_backend() {
         echo "❌ Failed to restart backend"
         return 1
     fi
+}
+
+# Function to update GitHub gist
+update_gist() {
+    local ngrok_url="$1"
+    echo "📡 Updating GitHub Gist..."
+    
+    # Try different methods to update gist
+    if [ -n "$GITHUB_TOKEN" ]; then
+        # Use environment variable
+        PATCH_DATA=$(cat <<EOF
+{
+  "files": {
+    "$GIST_FILENAME": {
+      "content": "$ngrok_url"
+    }
+  }
+}
+EOF
+)
+        
+        curl -s -X PATCH \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -d "$PATCH_DATA" \
+          "https://api.github.com/gists/$GIST_ID"
+    elif command -v gh &> /dev/null; then
+        # Use GitHub CLI
+        gh gist edit "$GIST_ID" --filename "$GIST_FILENAME" --content "$ngrok_url"
+    else
+        echo "❌ No GitHub authentication method available"
+        return 1
+    fi
+    
+    echo "✅ Gist updated at: https://gist.github.com/$GIST_ID"
+    return 0
 }
 
 # Function to start ngrok and update everything
@@ -129,34 +201,18 @@ start_ngrok_and_update() {
         fi
         
         # Update GitHub Gist with new URL
-        echo "📡 Updating GitHub Gist..."
-        PATCH_DATA=$(cat <<EOF
-{
-  "files": {
-    "$GIST_FILENAME": {
-      "content": "$NGROK_URL"
-    }
-  }
-}
-EOF
-)
-        
-        curl -s -X PATCH \
-          -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Accept: application/vnd.github.v3+json" \
-          -d "$PATCH_DATA" \
-          "https://api.github.com/gists/$GIST_ID"
-        
-        echo "✅ Gist updated at: https://gist.github.com/$GIST_ID"
-        
-        # Restart Backend Server via PM2
-        if restart_backend; then
-            echo "🎉 All done. Access via: $NGROK_URL"
-            
-            # Send Telegram notification for successful restart
-            send_telegram_notification "✅ <b>Backend Restarted Successfully</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n🌐 <b>Status:</b> Active and ready"
+        if update_gist "$NGROK_URL"; then
+            # Restart Backend Server via PM2
+            if restart_backend; then
+                echo "🎉 All done. Access via: $NGROK_URL"
+                
+                # Send Telegram notification for successful restart
+                send_telegram_notification "✅ <b>Backend Restarted Successfully</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n🌐 <b>Status:</b> Active and ready"
+            else
+                send_telegram_notification "⚠️ <b>Backend Restart Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n❌ <b>Error:</b> PM2 restart failed"
+            fi
         else
-            send_telegram_notification "⚠️ <b>Backend Restart Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n❌ <b>Error:</b> PM2 restart failed"
+            send_telegram_notification "⚠️ <b>Gist Update Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n❌ <b>Error:</b> Could not update GitHub gist"
         fi
         
     else
