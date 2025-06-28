@@ -251,4 +251,44 @@ Built with ❤️ for mobile repair shops worldwide.
 
 - The server and database work offline.
 - DuckDNS updater keeps your domain pointed to your current public IP.
-- PM2 ensures everything restarts after reboot or crash. 
+- PM2 ensures everything restarts after reboot or crash.
+
+# One-Click Backend Start
+
+## Android/Termux
+1. Open Termux in your backend directory.
+2. Run:
+   ```sh
+   ./start-backend-server.sh
+   ```
+   - This loads your .env, starts all services with PM2, and shows status.
+   - For auto-start on boot, use the Termux:Boot app and reboot your device.
+
+## Windows/PowerShell
+1. Open PowerShell in your backend directory.
+2. Run:
+   ```powershell
+   ./start-backend-server.ps1
+   ```
+   - This loads your .env, starts all services with PM2, and shows status.
+
+## Requirements
+- Node.js (v18+ recommended)
+- PM2 (`npm install -g pm2`)
+- (Optional) ngrok or DuckDNS for public access
+- (Optional) Telegram bot token for notifications
+
+## Environment Variables
+Edit the `.env` file in your project root:
+```
+NODE_ENV=production
+PORT=10000
+NGROK_AUTH_TOKEN=your_ngrok_auth_token_here
+DUCKDNS_DOMAIN=your_duckdns_domain_here
+DUCKDNS_TOKEN=your_duckdns_token_here
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+DB_FILE=db.json
+```
+
+--- 

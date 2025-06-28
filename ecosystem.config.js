@@ -1,12 +1,16 @@
 module.exports = {
   apps: [
     {
-      name: "backendserver",
+      name: "ngrok-backend",
       script: "./server.mjs",
       watch: false,
       env: {
-        NODE_ENV: "production"
-      }
+        NODE_ENV: "production",
+        PORT: 10000
+      },
+      error_file: "./ngrok-backend-error.log",
+      out_file: "./ngrok-backend.log",
+      log_file: "./ngrok-backend-combined.log"
     },
     {
       name: "duckdns-updater",
@@ -14,9 +18,12 @@ module.exports = {
       interpreter: "/data/data/com.termux/files/usr/bin/bash"
     },
     {
-      name: "ngrok",
-      script: "./ngrok",
-      args: "http 3000"
+      name: "telegram-bot",
+      script: "./scripts/telegram-bot.js",
+      watch: false,
+      env: {
+        NODE_ENV: "production"
+      }
     }
   ]
 } 
