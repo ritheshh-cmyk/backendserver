@@ -196,7 +196,7 @@ This project now supports running a self-hosted backend API on Android devices u
 
 ---
 
-Built with ❤️ for mobile repair shops worldwide.
+Built with ❤️ for mobile repair shops worldwide. 
 
 # backendserver
 
