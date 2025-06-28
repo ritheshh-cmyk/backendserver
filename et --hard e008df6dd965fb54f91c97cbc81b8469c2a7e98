@@ -1,0 +1,221 @@
+[33mcommit 98e53af5daa81a8bfc8b9f13bb08a684ff0cd14c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Sat Jun 28 00:43:42 2025 +0530
+
+    Add start-all.sh for auto-start and update-ngrok-gist.sh improvements
+
+[33mcommit e008df6dd965fb54f91c97cbcc81b8469c2a7e98[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Sat Jun 28 00:16:28 2025 +0530
+
+    Remove GitHub token from script; use environment variable instead
+
+[33mcommit 6fcb3d09ee7175ab88f216facb8032d952d18d5c[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Sat Jun 28 00:14:24 2025 +0530
+
+    Update script to use GITHUB_TOKEN from environment variable
+
+[33mcommit 084d430472a75f525d73ddbf673da7529d925c81[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Sat Jun 28 00:09:16 2025 +0530
+
+    Add update-ngrok-gist.sh script for dynamic Ngrok URL updating
+
+[33mcommit 40533f743c6b48d693e9f6372d299968058b0e3f[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 21:19:10 2025 +0530
+
+    chore: auto-start ngrok with backendserver in PM2
+
+[33mcommit 3b02a0e2c37fc0acb5e7ea40a1e56223c3b25beb[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 21:05:47 2025 +0530
+
+    Fix: pass default data to lowdb constructor for v6+
+
+[33mcommit 79c6b6f04ad48d3c9e6dd8377aedc35eab7ca69e[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 21:02:23 2025 +0530
+
+    Fix: wrap lowdb init in async function to support PM2/Node
+
+[33mcommit 3a6c74db865912b1e50bf97973325b0987a5294f[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 21:00:26 2025 +0530
+
+    Fix: set default data for lowdb to prevent missing default data error
+
+[33mcommit 61f05be6012af66cf5c3bcec211a30b6b1f3f03b[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 20:51:36 2025 +0530
+
+    Convert backend to ESM (server.mjs) for lowdb v6+ compatibility
+
+[33mcommit 02c18d61f950b4019b02586ab82a82d1e7a0f808[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 20:32:07 2025 +0530
+
+    Update server.js to listen on 0.0.0.0 and other fixes for public access
+
+[33mcommit d2a123f78d93067bc535843ceaaf265d7288c40c[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 19:17:33 2025 +0530
+
+    Update all backendserver files for portable DuckDNS/PM2 setup
+
+[33mcommit edc0c218439291844b2120233e1a187f07650ec0[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 18:50:16 2025 +0530
+
+    Add PM2 ecosystem.config.js for process management
+
+[33mcommit cda941b8d19349201b5d70d165c016c2720cc421[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 18:43:09 2025 +0530
+
+    Update DuckDNS token and domain for rithesh.duckdns.org
+
+[33mcommit add03377ca0eda0cad28d9f8fb89ffea33bc6f09[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 17:49:30 2025 +0530
+
+    Initial commit: Add Termux backend scripts and setup
+
+[33mcommit 1e79e08d4b7ec4ae231a19e17c0050663c755f7b[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 04:14:20 2025 +0530
+
+    Setup automatic deployment with GitHub Actions and Qovery
+
+[33mcommit 0fc0365d429a275176b327e4b8ec4c25a1b56b17[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 04:11:29 2025 +0530
+
+    Add Qovery deployment configuration and documentation
+
+[33mcommit d179fea0dea41754e2f07e2b30a7cf31e4220937[m
+Author: ritheshh-cmykkkk <stake15432@gmail.com>
+Date:   Fri Jun 27 01:53:04 2025 +0530
+
+    fix(deploy): force add dist/server files for Render deployment (storage.js, routes.js) and update .gitignore
+
+[33mcommit 4efa2a027862b9fbf5203605dc7f29ff28a6c716[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 18:54:25 2025 +0530
+
+    chore: move all backend code to git for clean separation
+
+[33mcommit a7e10245c6d158b010c6e7a0b5aaec22789ba4af[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 17:02:42 2025 +0530
+
+    feat: add /api/send-sms endpoint, backend fixes for Render, and seed random owner (rajshekhar) and worker (sravan) accounts
+
+[33mcommit f0e1cd2186af88c866e71b0bace7f3b12e6339af[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:43:17 2025 +0530
+
+    Fix all TypeScript errors: replace createInsertSchema with manual zod schemas, fix vite imports, and resolve type issues
+
+[33mcommit 7efbafa0691de53f1ada14842fbccb1dbb0dd32d[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:39:46 2025 +0530
+
+    Fix all remaining TypeScript errors: type conversions, vite imports, and schema issues
+
+[33mcommit f9b4ee51bf672f94ced5ad6bb0e4fd7076c37f68[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:32:22 2025 +0530
+
+    Fix TypeScript errors: add drizzle-zod, fix type mismatches, and resolve build issues
+
+[33mcommit 7d0e306cc974b6cf471746cb12444e4db83e3a02[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:20:07 2025 +0530
+
+    Fix TypeScript errors: remove unused imports, add types, fix number-to-string assignments
+
+[33mcommit e99ac9eb0b5eaa6e5ab2f80f2d279595d2f9a862[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:10:09 2025 +0530
+
+    Auto-fix TypeScript errors and dependencies
+
+[33mcommit a4ffcefd769fc68094859799dcce13a13001276e[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:07:40 2025 +0530
+
+    Auto-fix TypeScript errors and dependencies
+
+[33mcommit 22bdbb616d273c147bf4bec03b93f1a752521085[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 05:04:25 2025 +0530
+
+    Auto-fix TypeScript errors and dependencies
+
+[33mcommit c7cf3eaded2e040914247876093cee8079f0ce0e[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 04:46:03 2025 +0530
+
+    Fix async route handlers and add ExcelJS dependency for backend deployment
+
+[33mcommit d2a1f0c30327f7e509c8e4fbce1853ed5b16bf4d[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 04:30:31 2025 +0530
+
+    Fix backend integration: Update server index.ts to use actual routes and database, add ExcelJS dependency
+
+[33mcommit 6e2fe4a39f7076862d2b3997f1a7c46fc50c7c73[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 04:18:19 2025 +0530
+
+    Fix all TypeScript errors and ensure backend runs locally
+
+[33mcommit fbf7c549577797083ecb1b72ed1a52a11f04abb4[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 03:30:07 2025 +0530
+
+    Update CLI to deploy without payment using existing service
+
+[33mcommit 1472831c72af6f2a0b4826c2987c178dc2958aed[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 03:28:09 2025 +0530
+
+    Add custom Render CLI tool for deployment
+
+[33mcommit 12abd9394b43ced4b0043cf25cbdc1c6d59fc893[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 03:22:01 2025 +0530
+
+    Add Render deployment scripts and guides
+
+[33mcommit fba98476aad802548cf1cef92ace42010739bd32[m
+Merge: 34e043c fb2cc37
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 03:13:49 2025 +0530
+
+    Add Render deployment scripts and resolve merge conflicts
+
+[33mcommit 34e043c958ac46d526b3036befc169ff23fdd477[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Thu Jun 26 02:33:29 2025 +0530
+
+    Auto-applied fixes and updates
+
+[33mcommit 6de7479bdcf3bbb2d8881610f92dd17f6db9a019[m
+Author: ritheshh-cmykkkk <ritheshlucky1432@gmail.com>
+Date:   Wed Jun 25 17:58:44 2025 +0530
+
+    fix: wrap App in LanguageProvider to resolve useLanguage context error
+
+[33mcommit fb2cc37195f535d252b7be33a9121877cf70c695[m
+Author: stake7989 <44247406-stake7989@users.noreply.replit.com>
+Date:   Wed Jun 25 12:22:27 2025 +0000
+
+    Enable user login and database connectivity for core application functions
+    
+    Integrates PostgreSQL, migrates authentication logic to simple-final-server.js, and updates client config.
+    
+    Replit-Commit-Author: Agent
+    Replit-Commi
