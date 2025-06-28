@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # Exit on any error
 
 echo "🚀 Starting Backend Server..."
 
@@ -14,6 +15,12 @@ export PORT=${PORT:-10000}
 
 echo "🔧 Environment: $NODE_ENV"
 echo "🌐 Port: $PORT"
+
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    echo "❌ PM2 is not installed. Please run ./setup-backend.sh first"
+    exit 1
+fi
 
 # Start PM2 processes
 echo "🔄 Starting PM2 processes..."

@@ -292,3 +292,253 @@ DB_FILE=db.json
 ```
 
 --- 
+
+# Mobile Repair Tracker - Backend Server
+
+A Node.js backend server for mobile repair tracking with PM2 process management, auto-start capabilities, and public exposure via Ngrok or DuckDNS.
+
+## 🚀 Quick Start
+
+### Ubuntu-in-Termux (proot-distro)
+```bash
+# One-time setup (with safety checks and error handling)
+./setup-backend.sh
+
+# Start the server
+./start-backend-server.sh
+
+# Setup auto-start on boot
+./setup-auto-start.sh
+```
+
+### Windows/PowerShell
+```powershell
+# One-time setup (with safety checks and error handling)
+./setup-backend.ps1
+
+# Start the server
+./start-backend-server.ps1
+```
+
+## 📋 Requirements
+
+- **Node.js** (v18+ recommended)
+- **npm** (comes with Node.js)
+- **curl** (for health checks)
+- **PM2** (installed automatically by setup scripts)
+- **Optional**: ngrok or DuckDNS for public access
+- **Optional**: Telegram bot token for notifications
+
+## 🔧 Setup Instructions
+
+### 1. Initial Setup
+
+#### Ubuntu-in-Termux
+```bash
+# Clone or download your project
+cd ~/MobileRepairTracker-1
+
+# Run the setup script (includes safety checks)
+./setup-backend.sh
+```
+
+#### Windows
+```powershell
+# Clone or download your project
+cd C:\path\to\MobileRepairTracker-1
+
+# Run the setup script (includes safety checks)
+./setup-backend.ps1
+```
+
+### 2. Configure Environment Variables
+
+Edit the `.env` file with your actual values:
+```env
+# Backend Server Configuration
+NODE_ENV=production
+PORT=10000
+
+# Ngrok Configuration (if using ngrok)
+NGROK_AUTH_TOKEN=your_ngrok_auth_token_here
+
+# DuckDNS Configuration (if using DuckDNS)
+DUCKDNS_DOMAIN=your_duckdns_domain_here
+DUCKDNS_TOKEN=your_duckdns_token_here
+
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+
+# Database Configuration
+DB_FILE=db.json
+```
+
+### 3. Start the Server
+
+#### Ubuntu-in-Termux
+```bash
+./start-backend-server.sh
+```
+
+#### Windows
+```powershell
+./start-backend-server.ps1
+```
+
+### 4. Auto-Start on Boot (Ubuntu-in-Termux)
+
+```bash
+./setup-auto-start.sh
+```
+
+This will add the backend start command to your `~/.bashrc` so it starts automatically when you open Ubuntu-in-Termux.
+
+## 🛡️ Safety Features
+
+### Error Handling
+- **`set -e`** - Scripts exit immediately on any error
+- **Dependency checks** - Verify Node.js, npm, curl, PM2 are installed
+- **Port conflict detection** - Warn if port 10000 is already in use
+- **File existence checks** - Ensure required files exist before proceeding
+- **Graceful fallbacks** - Handle missing commands like `timeout`
+
+### Security
+- **Silent npm installs** - Reduce log noise and potential security exposure
+- **Absolute paths** - Use `./script.sh` instead of relative paths
+- **Environment validation** - Check and validate environment variables
+- **PM2 Termux support** - Proper startup configuration for Termux environments
+
+## 📊 Management Commands
+
+### PM2 Commands
+```bash
+# Check status
+pm2 status
+
+# View logs
+pm2 logs
+
+# Restart all services
+pm2 restart all
+
+# Stop all services
+pm2 stop all
+
+# Delete all services
+pm2 delete all
+```
+
+### Server Health Check
+```bash
+# Test if backend is responding
+curl http://localhost:10000/api/ping
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### 1. "Cannot find package 'lowdb'"
+```bash
+npm install
+```
+
+#### 2. "PM2 command not found"
+```bash
+npm install -g pm2
+```
+
+#### 3. "Permission denied" on scripts
+```bash
+chmod +x *.sh
+```
+
+#### 4. "curl is not installed"
+```bash
+sudo apt-get install curl
+```
+
+#### 5. "timeout command not found"
+```bash
+sudo apt-get install coreutils
+```
+
+#### 6. Server not responding on port 10000
+- Check if the server is running: `pm2 status`
+- Check logs: `pm2 logs`
+- Verify .env has correct PORT=10000
+- Check if port is already in use: `lsof -i :10000`
+
+#### 7. Auto-start not working (Ubuntu-in-Termux)
+- Check if the command was added to ~/.bashrc
+- Run: `source ~/.bashrc` to test immediately
+- Verify the path in ~/.bashrc is correct
+
+#### 8. PM2 startup fails
+- Try: `pm2 startup termux` for Termux environments
+- Check if running as root (may be required for startup)
+
+### Log Files
+- `backendserver.log` - Server output
+- `backendserver-error.log` - Server errors
+- `backendserver-combined.log` - Combined logs
+
+## 📱 Public Access Setup
+
+### Option 1: Ngrok
+1. Sign up at https://ngrok.com
+2. Get your auth token
+3. Add to .env: `NGROK_AUTH_TOKEN=your_token`
+4. The ecosystem config will start ngrok automatically
+
+### Option 2: DuckDNS
+1. Sign up at https://duckdns.org
+2. Create a subdomain
+3. Add to .env: `DUCKDNS_DOMAIN=your_subdomain.duckdns.org` and `DUCKDNS_TOKEN=your_token`
+4. The ecosystem config will start the DuckDNS updater automatically
+
+## 🤖 Telegram Bot Setup
+
+1. Create a bot with @BotFather on Telegram
+2. Get your bot token
+3. Get your chat ID (send a message to your bot and check https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates)
+4. Add to .env: `TELEGRAM_BOT_TOKEN=your_token` and `TELEGRAM_CHAT_ID=your_chat_id`
+
+## 📁 File Structure
+
+```
+MobileRepairTracker-1/
+├── server.mjs                 # Main server file
+├── ecosystem.config.js        # PM2 configuration
+├── start-backend-server.sh    # Ubuntu/Termux start script
+├── start-backend-server.ps1   # Windows start script
+├── setup-backend.sh           # Ubuntu/Termux setup script
+├── setup-backend.ps1          # Windows setup script
+├── setup-auto-start.sh        # Auto-start setup script
+├── duckdns-updater.sh         # DuckDNS updater script
+├── scripts/
+│   └── telegram-bot.js        # Telegram bot script
+├── .env                       # Environment variables
+├── db.json                    # Local database
+└── README.md                  # This file
+```
+
+## 🔄 API Endpoints
+
+- `GET /api/ping` - Health check
+- `POST /api/expense` - Add expense
+- `GET /api/expense` - Get all expenses
+
+## 📞 Support
+
+If you encounter issues:
+1. Check the troubleshooting section above
+2. Check PM2 logs: `pm2 logs`
+3. Verify your .env configuration
+4. Test the server manually: `node server.mjs`
+5. Run setup script again: `./setup-backend.sh`
+
+---
+
+**Your backend is now ready for production use with enhanced safety and error handling! 🎉** 
