@@ -255,14 +255,14 @@ Built with ❤️ for mobile repair shops worldwide.
 
 # One-Click Backend Start
 
-## Android/Termux
-1. Open Termux in your backend directory.
+## Ubuntu-in-Termux (proot-distro)
+1. Open your Ubuntu-in-Termux shell and cd to your backend directory.
 2. Run:
    ```sh
    ./start-backend-server.sh
    ```
    - This loads your .env, starts all services with PM2, and shows status.
-   - For auto-start on boot, use the Termux:Boot app and reboot your device.
+   - For auto-start on boot, use your proot-distro's init system or add to `.bashrc`.
 
 ## Windows/PowerShell
 1. Open PowerShell in your backend directory.
