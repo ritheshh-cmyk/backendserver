@@ -1,27 +1,62 @@
 #!/bin/bash
 
-# === CONFIGURATION ===
-# Load environment variables if .env file exists
-[ -f .env ] && source .env
+# === Ngrok Gist Updater v2 ===
+# Automatically updates GitHub gist with current ngrok URL
+# Includes Telegram notifications and backend restart
 
-# Default values (can be overridden by .env or command line)
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+# Load environment variables
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs)
+    print_info "Loaded environment from .env file"
+fi
+
+# Configuration
 PORT=${PORT:-10000}
 GIST_ID=${GIST_ID:-"d394f3df4c86cf1cb0040a7ec4138bfd"}
 GIST_FILENAME=${GIST_FILENAME:-"backend-url.txt"}
-AUTO_RESTART=${AUTO_RESTART:-true}
-RESTART_DELAY=${RESTART_DELAY:-60}
+TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-""}
+TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-""}
+TELEGRAM_ENABLE_NOTIFICATIONS=${TELEGRAM_ENABLE_NOTIFICATIONS:-"true"}
 
-# Command line argument parsing
+# Check if running in --once mode
+ONCE_MODE=false
 if [[ "$1" == "--once" ]]; then
-    AUTO_RESTART=false
-    echo "🔄 Running in single-shot mode"
-elif [[ "$1" == "--port" && -n "$2" ]]; then
-    PORT="$2"
-    echo "🔧 Using custom port: $PORT"
-elif [[ "$1" == "--help" ]]; then
-    echo "Usage: $0 [--once] [--port PORT] [--help]"
-    echo "  --once    Run once and exit (no auto-restart)"
-    echo "  --port    Specify custom port (default: 10000)"
+    ONCE_MODE=true
+    print_info "Running in once mode"
+fi
+
+# Show help
+if [[ "$1" == "--help" ]]; then
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --once    Run once and exit"
     echo "  --help    Show this help message"
     exit 0
 fi
@@ -48,10 +83,105 @@ detect_github_token() {
         return 0
     fi
     
+    # Check .env file
+    if [ -f ".env" ] && grep -q "GITHUB_TOKEN=" .env; then
+        echo "✅ GitHub token found in .env file"
+        export GITHUB_TOKEN=$(grep GITHUB_TOKEN .env | cut -d= -f2)
+        return 0
+    fi
+    
     return 1
 }
 
-# Ensure GitHub token is available
+# Function to detect ngrok token from various sources
+detect_ngrok_token() {
+    # Check environment variable first
+    if [ -n "$NGROK_AUTH_TOKEN" ]; then
+        echo "✅ Ngrok token found in environment variable"
+        return 0
+    fi
+    
+    # Check .env file
+    if [ -f ".env" ] && grep -q "NGROK_AUTH_TOKEN=" .env; then
+        echo "✅ Ngrok token found in .env file"
+        export NGROK_AUTH_TOKEN=$(grep NGROK_AUTH_TOKEN .env | cut -d= -f2)
+        return 0
+    fi
+    
+    # Check if ngrok is configured
+    if command -v ngrok &> /dev/null; then
+        if ngrok config check &> /dev/null; then
+            echo "✅ Ngrok is configured with auth token"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Function to setup tokens interactively
+setup_tokens_interactive() {
+    echo "🔧 Token Setup Required"
+    echo ""
+    
+    # GitHub token setup
+    if ! detect_github_token; then
+        echo "📝 GitHub Token Setup:"
+        echo "1. Go to: https://github.com/settings/tokens"
+        echo "2. Generate new token with 'gist' permission"
+        echo "3. Enter your GitHub token:"
+        read -s GITHUB_TOKEN_INPUT
+        echo ""
+        
+        if [ -n "$GITHUB_TOKEN_INPUT" ]; then
+            export GITHUB_TOKEN="$GITHUB_TOKEN_INPUT"
+            echo "✅ GitHub token set"
+            
+            # Save to .env
+            if [ ! -f ".env" ]; then
+                touch .env
+            fi
+            if ! grep -q "GITHUB_TOKEN=" .env; then
+                echo "GITHUB_TOKEN=$GITHUB_TOKEN_INPUT" >> .env
+                echo "💾 Saved to .env file"
+            fi
+        fi
+    fi
+    
+    # Ngrok token setup
+    if ! detect_ngrok_token; then
+        echo "📝 Ngrok Token Setup:"
+        echo "1. Go to: https://dashboard.ngrok.com/get-started/your-authtoken"
+        echo "2. Copy your authtoken"
+        echo "3. Enter your ngrok auth token:"
+        read -s NGROK_TOKEN_INPUT
+        echo ""
+        
+        if [ -n "$NGROK_TOKEN_INPUT" ]; then
+            export NGROK_AUTH_TOKEN="$NGROK_TOKEN_INPUT"
+            echo "✅ Ngrok token set"
+            
+            # Configure ngrok
+            if command -v ngrok &> /dev/null; then
+                ngrok config add-authtoken "$NGROK_TOKEN_INPUT"
+                echo "🔧 Ngrok configured"
+            fi
+            
+            # Save to .env
+            if [ ! -f ".env" ]; then
+                touch .env
+            fi
+            if ! grep -q "NGROK_AUTH_TOKEN=" .env; then
+                echo "NGROK_AUTH_TOKEN=$NGROK_TOKEN_INPUT" >> .env
+                echo "💾 Saved to .env file"
+            fi
+        fi
+    fi
+}
+
+# Ensure both tokens are available
+echo "🔍 Checking tokens..."
+
 if ! detect_github_token; then
     echo "❌ GitHub token not found. Please set it up:"
     echo ""
@@ -61,13 +191,54 @@ if ! detect_github_token; then
     echo "Method 2 - Add to .bashrc:"
     echo "  echo 'export GITHUB_TOKEN=your_token_here' >> ~/.bashrc"
     echo ""
-    echo "Method 3 - Git config:"
-    echo "  git config --global user.name 'Your Name'"
-    echo "  git config --global user.email 'your-email@example.com'"
+    echo "Method 3 - GitHub CLI:"
+    echo "  gh auth login"
+    echo ""
+    echo "Method 4 - .env file:"
+    echo "  echo 'GITHUB_TOKEN=your_token_here' >> .env"
     echo ""
     echo "🔗 Get a token from: https://github.com/settings/tokens (need 'gist' permission)"
-    exit 1
+    
+    # Offer interactive setup
+    echo ""
+    read -p "Would you like to set up tokens interactively? (y/n): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        setup_tokens_interactive
+    else
+        exit 1
+    fi
 fi
+
+if ! detect_ngrok_token; then
+    echo "❌ Ngrok token not found. Please set it up:"
+    echo ""
+    echo "Method 1 - Environment variable:"
+    echo "  export NGROK_AUTH_TOKEN=your_token_here"
+    echo ""
+    echo "Method 2 - Add to .bashrc:"
+    echo "  echo 'export NGROK_AUTH_TOKEN=your_token_here' >> ~/.bashrc"
+    echo ""
+    echo "Method 3 - ngrok config:"
+    echo "  ngrok config add-authtoken your_token_here"
+    echo ""
+    echo "Method 4 - .env file:"
+    echo "  echo 'NGROK_AUTH_TOKEN=your_token_here' >> .env"
+    echo ""
+    echo "🔗 Get a token from: https://dashboard.ngrok.com/get-started/your-authtoken"
+    
+    # Offer interactive setup
+    echo ""
+    read -p "Would you like to set up tokens interactively? (y/n): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        setup_tokens_interactive
+    else
+        exit 1
+    fi
+fi
+
+echo "✅ All tokens detected successfully!"
 
 # Create logs directory
 mkdir -p logs
@@ -104,13 +275,18 @@ check_internet() {
 # Function to restart backend via PM2
 restart_backend() {
     echo "♻️ Restarting backend via PM2..."
-    pm2 restart backendserver
-    if [ $? -eq 0 ]; then
-        echo "✅ Backend restarted successfully"
-        return 0
+    if command -v pm2 &> /dev/null; then
+        pm2 restart backendserver
+        if [ $? -eq 0 ]; then
+            echo "✅ Backend restarted successfully"
+            return 0
+        else
+            echo "❌ Failed to restart backend"
+            return 1
+        fi
     else
-        echo "❌ Failed to restart backend"
-        return 1
+        echo "⚠️ PM2 not found, skipping backend restart"
+        return 0
     fi
 }
 
@@ -223,42 +399,24 @@ start_ngrok_and_update() {
     return 0
 }
 
-# Main execution
-echo "🔄 Starting ngrok auto-restart service..."
-echo "📅 Started at: $(date)"
-
-# Send Telegram notification for service start
-send_telegram_notification "🚀 <b>Ngrok Auto-Start Service Started</b>\n\n📅 <b>Time:</b> $(date)\n🔧 <b>Port:</b> $PORT\n✅ Monitoring your backend"
-
-while true; do
-    if check_internet; then
-        echo "✅ Internet connection available"
-        echo "📅 $(date) - Attempting to (re)start ngrok and backend..."
-        if start_ngrok_and_update; then
-            echo "✅ Ngrok started successfully"
-        else
-            echo "❌ Failed to start ngrok"
-        fi
-    else
-        echo "❌ No internet connection"
-        echo "📅 $(date) - Waiting for internet connection..."
-        
-        # Send Telegram notification for internet loss (only once)
-        if [ "$INTERNET_LOST_NOTIFIED" != "true" ]; then
-            send_telegram_notification "⚠️ <b>Internet Connection Lost</b>\n\n📅 <b>Time:</b> $(date)\n🔄 Waiting for connection to restore..."
-            export INTERNET_LOST_NOTIFIED=true
-        fi
-    fi
+# Main loop
+if [ "$ONCE_MODE" = true ]; then
+    # Run once
+    start_ngrok_and_update
+else
+    # Continuous monitoring
+    print_info "Starting continuous ngrok monitoring..."
     
-    if [ "$AUTO_RESTART" = true ]; then
-        echo "⏳ Waiting $RESTART_DELAY seconds before next check..."
-        sleep $RESTART_DELAY
-    else
-        echo "🛑 Single-shot mode completed. Exiting."
+    while true; do
+        if check_internet; then
+            start_ngrok_and_update
+        else
+            print_warning "No internet connection, waiting..."
+            sleep 30
+            continue
+        fi
         
-        # Send Telegram notification for service stop
-        send_telegram_notification "🛑 <b>Ngrok Service Stopped</b>\n\n📅 <b>Time:</b> $(date)\n🔄 Service has been stopped"
-        
-        break
-    fi
-done 
+        # Wait before next check
+        sleep 60
+    done
+fi 

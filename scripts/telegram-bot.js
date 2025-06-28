@@ -3,7 +3,14 @@
 // === Telegram Bot for Ngrok Monitoring ===
 // Sends notifications about ngrok status, URL changes, and service events
 
-const TelegramBot = require('node-telegram-bot-api');
+let TelegramBot;
+try {
+    TelegramBot = require('node-telegram-bot-api');
+} catch (error) {
+    console.error('❌ node-telegram-bot-api not installed. Run: npm install node-telegram-bot-api');
+    process.exit(1);
+}
+
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
@@ -32,8 +39,12 @@ let state = {
 // Initialize bot
 let bot;
 if (config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_CHAT_ID) {
-    bot = new TelegramBot(config.TELEGRAM_BOT_TOKEN, { polling: false });
-    console.log('🤖 Telegram bot initialized');
+    try {
+        bot = new TelegramBot(config.TELEGRAM_BOT_TOKEN, { polling: false });
+        console.log('🤖 Telegram bot initialized');
+    } catch (error) {
+        console.error('❌ Failed to initialize Telegram bot:', error.message);
+    }
 } else {
     console.log('⚠️ Telegram bot not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID');
 }
@@ -198,16 +209,12 @@ if (bot) {
                 );
                 
                 try {
-                    await execAsync('pkill -f ngrok');
-                    await execAsync('pkill -f "update-ngrok-gist-v2.sh"');
-                    setTimeout(async () => {
-                        await execAsync('./update-ngrok-gist-v2.sh --once');
-                        sendNotification(
-                            `✅ <b>Restart Completed</b>\n\n` +
-                            `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
-                            `🔄 Ngrok service has been restarted`
-                        );
-                    }, 2000);
+                    await execAsync('pm2 restart ngrok-manager');
+                    sendNotification(
+                        `✅ <b>Restart Command Sent</b>\n\n` +
+                        `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
+                        `🔄 Ngrok manager restart initiated`
+                    );
                 } catch (error) {
                     sendNotification(
                         `❌ <b>Restart Failed</b>\n\n` +
@@ -217,55 +224,23 @@ if (bot) {
                 }
                 break;
                 
-            case '/logs':
-                try {
-                    const logFiles = fs.readdirSync(path.join(config.PROJECT_DIR, 'backend/logs'))
-                        .filter(file => file.startsWith('backend_'))
-                        .sort()
-                        .reverse()
-                        .slice(0, 3);
-                    
-                    let logContent = `📋 <b>Recent Logs</b>\n\n`;
-                    
-                    for (const logFile of logFiles) {
-                        const logPath = path.join(config.PROJECT_DIR, 'backend/logs', logFile);
-                        const content = fs.readFileSync(logPath, 'utf8');
-                        const lastLines = content.split('\n').slice(-5).join('\n');
-                        
-                        logContent += `📄 <b>${logFile}</b>\n<code>${lastLines}</code>\n\n`;
-                    }
-                    
-                    // Split if too long
-                    if (logContent.length > 4000) {
-                        logContent = logContent.substring(0, 4000) + '\n... (truncated)';
-                    }
-                    
-                    sendNotification(logContent);
-                } catch (error) {
-                    sendNotification(
-                        `❌ <b>Log Retrieval Failed</b>\n\n` +
-                        `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
-                        `❌ <b>Error:</b> ${error.message}`
-                    );
-                }
-                break;
-                
             case '/help':
                 sendNotification(
-                    `🤖 <b>Ngrok Monitor Bot Commands</b>\n\n` +
+                    `🤖 <b>Available Commands</b>\n\n` +
                     `/start - Start monitoring\n` +
-                    `/status - Show current status\n` +
+                    `/status - Show system status\n` +
                     `/restart - Restart ngrok service\n` +
-                    `/logs - Show recent logs\n` +
                     `/help - Show this help\n\n` +
-                    `📅 <b>Last Updated:</b> ${new Date().toLocaleString()}`
+                    `📅 <b>Time:</b> ${new Date().toLocaleString()}`
                 );
                 break;
                 
             default:
                 sendNotification(
                     `❓ <b>Unknown Command</b>\n\n` +
-                    `Use /help to see available commands`
+                    `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
+                    `💬 <b>Message:</b> ${text}\n\n` +
+                    `Use /help for available commands`
                 );
         }
     });
@@ -273,32 +248,51 @@ if (bot) {
 
 // Main monitoring loop
 async function startMonitoring() {
-    log('🤖 Starting Telegram bot monitoring...');
+    log('🚀 Starting Telegram monitoring bot...');
     
     if (bot) {
         sendNotification(
-            `🚀 <b>Ngrok Monitor Bot Started</b>\n\n` +
+            `🤖 <b>Ngrok Monitor Bot Started</b>\n\n` +
             `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
             `✅ Monitoring your ngrok backend\n\n` +
             `Use /help for available commands`
         );
     }
     
+    // Initial check
+    await checkNgrokStatus();
+    await checkBackendStatus();
+    
+    // Set up monitoring interval
     setInterval(async () => {
         state.lastCheck = new Date();
         await checkNgrokStatus();
         await checkBackendStatus();
     }, config.CHECK_INTERVAL);
+    
+    log(`✅ Monitoring started with ${config.CHECK_INTERVAL}ms interval`);
 }
 
-// Handle graceful shutdown
+// Handle process termination
 process.on('SIGINT', () => {
-    log('🛑 Shutting down Telegram bot...');
+    log('🛑 Received SIGINT, shutting down gracefully...');
     if (bot) {
         sendNotification(
-            `🛑 <b>Ngrok Monitor Bot Stopped</b>\n\n` +
+            `🛑 <b>Bot Shutting Down</b>\n\n` +
             `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
-            `❌ Monitoring has been stopped`
+            `🔄 Monitoring stopped`
+        );
+    }
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    log('🛑 Received SIGTERM, shutting down gracefully...');
+    if (bot) {
+        sendNotification(
+            `🛑 <b>Bot Shutting Down</b>\n\n` +
+            `📅 <b>Time:</b> ${new Date().toLocaleString()}\n` +
+            `🔄 Monitoring stopped`
         );
     }
     process.exit(0);
