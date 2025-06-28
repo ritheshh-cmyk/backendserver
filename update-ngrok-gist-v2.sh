@@ -8,7 +8,6 @@
 PORT=${PORT:-10000}
 GIST_ID=${GIST_ID:-"d394f3df4c86cf1cb0040a7ec4138bfd"}
 GIST_FILENAME=${GIST_FILENAME:-"backend-url.txt"}
-BACKEND_FILE=${BACKEND_FILE:-"backend/server/index.ts"}
 AUTO_RESTART=${AUTO_RESTART:-true}
 RESTART_DELAY=${RESTART_DELAY:-60}
 
@@ -35,7 +34,7 @@ if [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 # Create logs directory
-mkdir -p backend/logs
+mkdir -p logs
 
 # Initialize previous URL tracking
 PREV_URL=""
@@ -62,6 +61,19 @@ check_internet() {
     if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
         return 0
     else
+        return 1
+    fi
+}
+
+# Function to restart backend via PM2
+restart_backend() {
+    echo "♻️ Restarting backend via PM2..."
+    pm2 restart backendserver
+    if [ $? -eq 0 ]; then
+        echo "✅ Backend restarted successfully"
+        return 0
+    else
+        echo "❌ Failed to restart backend"
         return 1
     fi
 }
@@ -116,17 +128,18 @@ start_ngrok_and_update() {
             send_telegram_notification "🚀 <b>Ngrok Started</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n🌐 <b>Status:</b> Active"
         fi
         
-        # Patch CORS origin in backend index.ts
-        echo "🔧 Updating CORS config in $BACKEND_FILE..."
-        sed -i "s|'https://[a-zA-Z0-9\-]*\.ngrok\.io'|'$NGROK_URL'|g" "$BACKEND_FILE"
-        echo "✅ CORS origin updated"
-        
         # Update GitHub Gist with new URL
         echo "📡 Updating GitHub Gist..."
-        PATCH_DATA=$(jq -n \
-          --arg filename "$GIST_FILENAME" \
-          --arg content "$NGROK_URL" \
-          '{files: {($filename): {content: $content}}}')
+        PATCH_DATA=$(cat <<EOF
+{
+  "files": {
+    "$GIST_FILENAME": {
+      "content": "$NGROK_URL"
+    }
+  }
+}
+EOF
+)
         
         curl -s -X PATCH \
           -H "Authorization: token $GITHUB_TOKEN" \
@@ -136,25 +149,15 @@ start_ngrok_and_update() {
         
         echo "✅ Gist updated at: https://gist.github.com/$GIST_ID"
         
-        # Restart Backend Server
-        echo "♻️ Rebuilding and restarting backend..."
-        cd backend || return 1
-        npm run build || { 
-            echo "❌ Build failed"
-            send_telegram_notification "❌ <b>Backend Build Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔧 <b>Error:</b> npm run build failed"
-            return 1
-        }
-        pkill -f "node"
-        
-        # Create timestamped log file
-        TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-        nohup npm start > "logs/backend_$TIMESTAMP.log" 2>&1 &
-        cd ../
-        echo "✅ Backend is running. Logs: backend/logs/backend_$TIMESTAMP.log"
-        echo "🎉 All done. Access via: $NGROK_URL"
-        
-        # Send Telegram notification for successful restart
-        send_telegram_notification "✅ <b>Backend Restarted Successfully</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n📝 <b>Log:</b> backend_$TIMESTAMP.log"
+        # Restart Backend Server via PM2
+        if restart_backend; then
+            echo "🎉 All done. Access via: $NGROK_URL"
+            
+            # Send Telegram notification for successful restart
+            send_telegram_notification "✅ <b>Backend Restarted Successfully</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n🌐 <b>Status:</b> Active and ready"
+        else
+            send_telegram_notification "⚠️ <b>Backend Restart Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n❌ <b>Error:</b> PM2 restart failed"
+        fi
         
     else
         echo "🔁 Ngrok URL unchanged. Skipping update."
