@@ -44,6 +44,19 @@ if [ -f .ngrok-url ]; then
     echo "📄 Previous ngrok URL loaded: $PREV_URL"
 fi
 
+# Function to send Telegram notification
+send_telegram_notification() {
+    local message="$1"
+    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] && [ "$TELEGRAM_ENABLE_NOTIFICATIONS" != "false" ]; then
+        # URL encode the message
+        local encoded_message=$(echo "$message" | sed 's/ /%20/g' | sed 's/\n/%0A/g')
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$encoded_message" \
+            -d "parse_mode=HTML" > /dev/null 2>&1
+    fi
+}
+
 # Function to check internet connectivity
 check_internet() {
     if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
@@ -78,6 +91,10 @@ start_ngrok_and_update() {
     if [ -z "$NGROK_URL" ]; then
         echo "❌ Failed to get Ngrok URL. Killing ngrok..."
         kill $NGROK_PID 2>/dev/null
+        
+        # Send Telegram notification
+        send_telegram_notification "❌ <b>Ngrok Failed to Start</b>\n\n📅 <b>Time:</b> $(date)\n🔧 <b>Port:</b> $PORT\n❌ <b>Error:</b> Could not get ngrok URL"
+        
         return 1
     fi
     
@@ -91,6 +108,13 @@ start_ngrok_and_update() {
         # Save URL locally
         echo "$NGROK_URL" > .ngrok-url
         echo "💾 URL saved to .ngrok-url"
+        
+        # Send Telegram notification for URL change
+        if [ -n "$PREV_URL" ]; then
+            send_telegram_notification "🔄 <b>Ngrok URL Changed</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>Old URL:</b> <code>$PREV_URL</code>\n🔗 <b>New URL:</b> <code>$NGROK_URL</code>\n\n✅ Backend will be restarted automatically"
+        else
+            send_telegram_notification "🚀 <b>Ngrok Started</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n🌐 <b>Status:</b> Active"
+        fi
         
         # Patch CORS origin in backend index.ts
         echo "🔧 Updating CORS config in $BACKEND_FILE..."
@@ -115,7 +139,11 @@ start_ngrok_and_update() {
         # Restart Backend Server
         echo "♻️ Rebuilding and restarting backend..."
         cd backend || return 1
-        npm run build || { echo "❌ Build failed"; return 1; }
+        npm run build || { 
+            echo "❌ Build failed"
+            send_telegram_notification "❌ <b>Backend Build Failed</b>\n\n📅 <b>Time:</b> $(date)\n🔧 <b>Error:</b> npm run build failed"
+            return 1
+        }
         pkill -f "node"
         
         # Create timestamped log file
@@ -124,6 +152,10 @@ start_ngrok_and_update() {
         cd ../
         echo "✅ Backend is running. Logs: backend/logs/backend_$TIMESTAMP.log"
         echo "🎉 All done. Access via: $NGROK_URL"
+        
+        # Send Telegram notification for successful restart
+        send_telegram_notification "✅ <b>Backend Restarted Successfully</b>\n\n📅 <b>Time:</b> $(date)\n🔗 <b>URL:</b> <code>$NGROK_URL</code>\n📝 <b>Log:</b> backend_$TIMESTAMP.log"
+        
     else
         echo "🔁 Ngrok URL unchanged. Skipping update."
         return 0
@@ -135,6 +167,9 @@ start_ngrok_and_update() {
 # Main execution
 echo "🔄 Starting ngrok auto-restart service..."
 echo "📅 Started at: $(date)"
+
+# Send Telegram notification for service start
+send_telegram_notification "🚀 <b>Ngrok Auto-Start Service Started</b>\n\n📅 <b>Time:</b> $(date)\n🔧 <b>Port:</b> $PORT\n✅ Monitoring your backend"
 
 while true; do
     if check_internet; then
@@ -148,6 +183,12 @@ while true; do
     else
         echo "❌ No internet connection"
         echo "📅 $(date) - Waiting for internet connection..."
+        
+        # Send Telegram notification for internet loss (only once)
+        if [ "$INTERNET_LOST_NOTIFIED" != "true" ]; then
+            send_telegram_notification "⚠️ <b>Internet Connection Lost</b>\n\n📅 <b>Time:</b> $(date)\n🔄 Waiting for connection to restore..."
+            export INTERNET_LOST_NOTIFIED=true
+        fi
     fi
     
     if [ "$AUTO_RESTART" = true ]; then
@@ -155,6 +196,10 @@ while true; do
         sleep $RESTART_DELAY
     else
         echo "🛑 Single-shot mode completed. Exiting."
+        
+        # Send Telegram notification for service stop
+        send_telegram_notification "🛑 <b>Ngrok Service Stopped</b>\n\n📅 <b>Time:</b> $(date)\n🔄 Service has been stopped"
+        
         break
     fi
 done 

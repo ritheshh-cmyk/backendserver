@@ -1,0 +1,25 @@
+{
+  "name": "ngrok-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for monitoring ngrok backend status",
+  "main": "telegram-bot.js",
+  "scripts": {
+    "start": "node telegram-bot.js",
+    "dev": "nodemon telegram-bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "ngrok",
+    "monitoring",
+    "notifications"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+} 
