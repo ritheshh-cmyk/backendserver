@@ -1,8 +1,33 @@
 export interface User {
   id: number;
   username: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'owner' | 'worker';
   createdAt: string;
+}
+
+// Role-based permissions
+export interface RolePermissions {
+  admin: {
+    canAccessWorkersPage: true;
+    canAccessOwnersPage: true;
+    canManageUsers: true;
+    canViewAllData: true;
+    canManageSystem: true;
+  };
+  owner: {
+    canAccessWorkersPage: false;
+    canAccessOwnersPage: true;
+    canManageUsers: false;
+    canViewAllData: true;
+    canManageSystem: false;
+  };
+  worker: {
+    canAccessWorkersPage: true;
+    canAccessOwnersPage: false;
+    canManageUsers: false;
+    canViewAllData: false;
+    canManageSystem: false;
+  };
 }
 
 export interface Transaction {

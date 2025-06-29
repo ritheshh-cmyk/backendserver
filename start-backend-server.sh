@@ -22,12 +22,17 @@ if ! command -v pm2 &> /dev/null; then
     exit 1
 fi
 
+# Stop any existing PM2 processes
+echo "🛑 Stopping existing PM2 processes..."
+pm2 stop all 2>/dev/null || true
+pm2 delete all 2>/dev/null || true
+
 # Start PM2 processes
 echo "🔄 Starting PM2 processes..."
 pm2 start ecosystem.config.cjs
 
 # Wait a moment for processes to start
-sleep 3
+sleep 5
 
 # Show status
 echo "📊 === Backend Server Status ==="
@@ -39,16 +44,30 @@ echo ""
 echo "🌐 Ngrok Status:"
 if pgrep -f "ngrok" > /dev/null; then
     echo "✅ Ngrok is running"
+    # Get ngrok URL if available
+    if curl -s http://localhost:4040/api/tunnels > /dev/null 2>&1; then
+        NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' 2>/dev/null)
+        if [ "$NGROK_URL" != "null" ] && [ -n "$NGROK_URL" ]; then
+            echo "🔗 Ngrok URL: $NGROK_URL"
+        fi
+    fi
 else
     echo "❌ Ngrok is not running"
 fi
 
 echo ""
 echo "🔧 Backend Status:"
-if curl -s http://localhost:$PORT/api/ping > /dev/null; then
+if curl -s http://localhost:$PORT/health > /dev/null 2>&1; then
     echo "✅ Backend is responding on port $PORT"
+    # Show health response
+    HEALTH_RESPONSE=$(curl -s http://localhost:$PORT/health)
+    echo "📊 Health: $HEALTH_RESPONSE"
+elif curl -s http://localhost:$PORT/api/ping > /dev/null 2>&1; then
+    echo "✅ Backend is responding on port $PORT (ping endpoint)"
 else
     echo "❌ Backend is not responding on port $PORT"
+    echo "🔍 Checking PM2 logs..."
+    pm2 logs backendserver --lines 5
 fi
 
 echo ""
@@ -67,4 +86,5 @@ echo ""
 echo "✅ Backend server started successfully!"
 echo "📊 Check status: pm2 status"
 echo "📝 View logs: pm2 logs"
-echo "🛑 Stop server: pm2 stop all" 
+echo "🛑 Stop server: pm2 stop all"
+echo "🔄 Restart: pm2 restart all" 

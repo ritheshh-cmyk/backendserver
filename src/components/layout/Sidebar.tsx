@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   CreditCard,
@@ -13,6 +14,7 @@ import {
   Settings,
   X,
   Smartphone,
+  Shield,
 } from "lucide-react";
 
 const navigation = [
@@ -21,41 +23,55 @@ const navigation = [
     href: "/",
     icon: LayoutDashboard,
     exact: true,
+    roles: ['admin', 'owner', 'worker'],
   },
   {
     name: "transactions",
     href: "/transactions",
     icon: CreditCard,
+    roles: ['admin', 'owner', 'worker'],
   },
   {
     name: "inventory",
     href: "/inventory",
     icon: Package,
+    roles: ['admin', 'worker'],
   },
   {
     name: "suppliers",
     href: "/suppliers",
     icon: Users,
+    roles: ['admin', 'owner'],
   },
   {
     name: "expenditures",
     href: "/expenditures",
     icon: TrendingUp,
+    roles: ['admin', 'owner'],
   },
   {
     name: "bills",
     href: "/bills",
     icon: Receipt,
+    roles: ['admin', 'owner', 'worker'],
   },
   {
     name: "reports",
     href: "/reports",
     icon: FileText,
+    roles: ['admin', 'owner'],
+  },
+  {
+    name: "users",
+    href: "/users",
+    icon: Shield,
+    roles: ['admin'],
   },
   {
     name: "settings",
     href: "/settings",
     icon: Settings,
+    roles: ['admin'],
   },
 ];
 
@@ -67,6 +83,7 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   const isActive = (item: (typeof navigation)[0]) => {
     if (item.exact) {
@@ -74,6 +91,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     }
     return location.pathname.startsWith(item.href);
   };
+
+  // Filter navigation items based on user role
+  const filteredNavigation = navigation.filter(item => 
+    item.roles.includes(user?.role || 'worker')
+  );
 
   return (
     <>
@@ -97,7 +119,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.href}
@@ -158,7 +180,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.href}

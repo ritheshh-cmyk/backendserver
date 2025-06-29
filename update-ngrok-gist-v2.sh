@@ -37,7 +37,7 @@ if [ -f ".env" ]; then
 fi
 
 # Configuration
-PORT=${PORT:-10000}
+PORT=${PORT:-10000}  # Fixed: Use 10000 consistently
 GIST_ID=${GIST_ID:-"d394f3df4c86cf1cb0040a7ec4138bfd"}
 GIST_FILENAME=${GIST_FILENAME:-"backend-url.txt"}
 TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-""}
@@ -324,6 +324,40 @@ EOF
     
     echo "✅ Gist updated at: https://gist.github.com/$GIST_ID"
     return 0
+}
+
+# Function to get ngrok URL
+get_ngrok_url() {
+    # Try to get URL from ngrok API
+    if curl -s http://localhost:4040/api/tunnels > /dev/null 2>&1; then
+        local url=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' 2>/dev/null)
+        if [ "$url" != "null" ] && [ -n "$url" ]; then
+            echo "$url"
+            return 0
+        fi
+    fi
+    
+    # Try to get from ngrok status
+    if command -v ngrok &> /dev/null; then
+        local status_output=$(ngrok status 2>/dev/null)
+        if echo "$status_output" | grep -q "https://.*\.ngrok\.io"; then
+            echo "$status_output" | grep -o "https://.*\.ngrok\.io" | head -1
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Function to check if backend is running
+check_backend() {
+    if curl -s http://localhost:$PORT/health > /dev/null 2>&1; then
+        return 0
+    elif curl -s http://localhost:$PORT/api/ping > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Function to start ngrok and update everything

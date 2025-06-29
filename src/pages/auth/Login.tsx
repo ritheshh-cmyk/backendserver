@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Smartphone,
   Eye,
@@ -20,30 +21,48 @@ import {
   Wrench,
   Zap,
   Shield,
+  AlertCircle,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
     rememberMe: false,
   });
+  
+  const { login, isLoading, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Mock login delay
-    setTimeout(() => {
-      setIsLoading(false);
-      // Redirect to dashboard (UI only)
-      window.location.href = "/";
-    }, 2000);
+    
+    const success = await login(formData.username, formData.password);
+    
+    if (success) {
+      // Redirect based on user role or to dashboard
+      navigate("/");
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Demo credentials helper
+  const fillDemoCredentials = (role: 'admin' | 'owner' | 'worker') => {
+    const credentials = {
+      admin: { username: 'rithesh', password: '7989002273' },
+      owner: { username: 'rajashekar', password: 'raj99481' },
+      worker: { username: 'sravan', password: 'sravan6565' }
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      ...credentials[role]
+    }));
   };
 
   return (
@@ -125,15 +144,24 @@ export default function Login() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <Alert className="mb-4 border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@repairshop.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    id="username"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
                     required
                     className="h-11"
                   />
@@ -204,17 +232,51 @@ export default function Login() {
                   )}
                 </Button>
               </form>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <div className="text-center text-sm text-muted-foreground">
-                Need help with your account?{" "}
-                <Link
-                  to="/support"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Contact Support
-                </Link>
+
+              {/* Demo credentials */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Demo Credentials:</h4>
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => fillDemoCredentials('admin')}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin (rithesh) - Full Access
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => fillDemoCredentials('owner')}
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Owner (rajashekar) - Owner Access
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => fillDemoCredentials('worker')}
+                  >
+                    <Wrench className="h-4 w-4 mr-2" />
+                    Worker (sravan) - Worker Access
+                  </Button>
+                </div>
               </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-2">
+              <p className="text-sm text-muted-foreground text-center">
+                Don't have an account?{" "}
+                <Link to="/auth/signup" className="text-primary hover:underline">
+                  Contact administrator
+                </Link>
+              </p>
             </CardFooter>
           </Card>
         </div>

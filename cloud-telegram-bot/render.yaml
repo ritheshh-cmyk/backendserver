@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: cloud-telegram-bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: NGROK_API_URL
+        sync: false
+      - key: CHECK_INTERVAL
+        value: 60000
+      - key: ENABLE_NOTIFICATIONS
+        value: true 

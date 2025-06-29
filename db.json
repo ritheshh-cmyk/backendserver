@@ -1,3 +1,26 @@
 {
-  "expenses": []
+  "expenses": [],
+  "users": [
+    {
+      "id": 1,
+      "username": "rithesh",
+      "password": "$2b$10$r8eWNgeTGgxNhAQrS63uHefm.2217IZnE3XK5aX5D0oNeH0do2Vk2",
+      "role": "admin",
+      "createdAt": "2025-06-28T19:44:12.433Z"
+    },
+    {
+      "id": 2,
+      "username": "rajashekar",
+      "password": "$2b$10$ftaVQ.a/4gjy6vLZ.5cvNO4vNTz/THGpY4LqskXxSDJioQBm3Y0Gm",
+      "role": "owner",
+      "createdAt": "2025-06-28T19:44:12.434Z"
+    },
+    {
+      "id": 3,
+      "username": "sravan",
+      "password": "$2b$10$e8GL5Sole9hDn9TevIDrC.78uHPrELgLu5oLVb0EWNGV8bAyOUrj2",
+      "role": "worker",
+      "createdAt": "2025-06-28T19:44:12.434Z"
+    }
+  ]
 }

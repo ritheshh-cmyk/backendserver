@@ -19,12 +19,17 @@ import {
   Settings,
   Globe,
   Monitor,
+  Shield,
+  Zap,
+  Wrench,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ConnectionIndicator } from "@/contexts/ConnectionContext";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -33,7 +38,44 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <Shield className="h-4 w-4" />;
+      case 'owner':
+        return <Zap className="h-4 w-4" />;
+      case 'worker':
+        return <Wrench className="h-4 w-4" />;
+      default:
+        return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'destructive';
+      case 'owner':
+        return 'default';
+      case 'worker':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getInitials = (username: string) => {
+    return username.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-40 flex h-14 sm:h-16 shrink-0 items-center gap-x-3 sm:gap-x-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4 shadow-sm lg:gap-x-6 lg:px-8 safe-area-top electron-drag">
@@ -158,9 +200,9 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="relative h-10 w-10 rounded-full electron-no-drag touch-target"
             >
               <Avatar className="h-9 w-9">
-                <AvatarImage src="/avatars/admin.png" alt="Admin" />
+                <AvatarImage src="/avatars/admin.png" alt={user?.username || "User"} />
                 <AvatarFallback className="bg-primary text-primary-foreground font-medium text-sm">
-                  AD
+                  {user ? getInitials(user.username) : "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -168,23 +210,28 @@ export function Header({ onMenuClick }: HeaderProps) {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
-                <p className="font-medium">Admin User</p>
-                <p className="w-[200px] truncate text-sm text-muted-foreground">
-                  admin@repairshop.com
-                </p>
+                <p className="font-medium">{user?.username || "User"}</p>
+                <div className="flex items-center gap-2">
+                  {getRoleIcon(user?.role || 'worker')}
+                  <Badge variant={getRoleBadgeVariant(user?.role || 'worker')} className="text-xs">
+                    {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || "Worker"}
+                  </Badge>
+                </div>
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2">
-              <User className="h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
+            <DropdownMenuItem className="gap-2" onClick={() => navigate("/settings")}>
               <Settings className="h-4 w-4" />
               {t("settings")}
             </DropdownMenuItem>
+            {user?.role === 'admin' && (
+              <DropdownMenuItem className="gap-2" onClick={() => navigate("/users")}>
+                <Shield className="h-4 w-4" />
+                User Management
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-destructive">
+            <DropdownMenuItem className="gap-2 text-destructive" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               {t("logout")}
             </DropdownMenuItem>

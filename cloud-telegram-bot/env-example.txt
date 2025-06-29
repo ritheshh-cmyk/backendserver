@@ -1,0 +1,12 @@
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+TELEGRAM_ENABLE_NOTIFICATIONS=true
+
+# Backend Configuration
+BACKEND_URL=https://your-ngrok-url.ngrok.io
+NGROK_API_URL=https://your-ngrok-url.ngrok.io:4040
+
+# Monitoring Configuration
+CHECK_INTERVAL=60000
+PORT=3000 
