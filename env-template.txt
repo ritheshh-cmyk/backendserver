@@ -1,0 +1,132 @@
+# ===== Mobile Repair Tracker - Environment Template =====
+# Copy this file to .env and fill in your actual values
+
+# ===== REQUIRED TOKENS =====
+# GitHub Personal Access Token (required for Gist updates)
+# Get from: https://github.com/settings/tokens (need 'gist' permission)
+GITHUB_TOKEN=your_github_token_here
+
+# Ngrok Auth Token (required for ngrok functionality)
+# Get from: https://dashboard.ngrok.com/get-started/your-authtoken
+NGROK_AUTH_TOKEN=your_ngrok_auth_token_here
+
+# ===== TELEGRAM BOT (Optional) =====
+# Get bot token from @BotFather on Telegram
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# Get chat ID by messaging @userinfobot on Telegram
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+
+# Enable/disable Telegram notifications (true/false)
+TELEGRAM_ENABLE_NOTIFICATIONS=true
+
+# ===== SYSTEM CONFIGURATION =====
+# Backend port (default: 10000)
+PORT=10000
+
+# Node environment (production/development)
+NODE_ENV=production
+
+# ===== GIST CONFIGURATION =====
+# GitHub Gist ID (your existing Gist)
+GIST_ID=d394f3df4c86cf1cb0040a7ec4138bfd
+
+# Gist filename (the file that contains the backend URL)
+GIST_FILENAME=backend-url.txt
+
+# ===== BACKEND CONFIGURATION =====
+# JWT secret for authentication
+JWT_SECRET=your-super-secret-jwt-key-change-this
+
+# Salt rounds for password hashing
+SALT_ROUNDS=12
+
+# ===== SMS CONFIGURATION (Optional) =====
+# Fast2SMS API key for SMS notifications
+FAST2SMS_API_KEY=your_fast2sms_api_key_here
+
+# Fast2SMS sender ID
+FAST2SMS_SENDER_ID=your_sender_id_here
+
+# ===== MONITORING CONFIGURATION =====
+# Check interval for monitoring (milliseconds)
+CHECK_INTERVAL=30000
+
+# Maximum retries for operations
+MAX_RETRIES=10
+
+# Retry delay (milliseconds)
+RETRY_DELAY=5000
+
+# ===== AUTO-RESTART CONFIGURATION =====
+# Enable auto-restart on failures
+AUTO_RESTART=true
+
+# Delay between restart attempts (seconds)
+RESTART_DELAY=60
+
+# ===== LOGGING CONFIGURATION =====
+# Log level (debug, info, warn, error)
+LOG_LEVEL=info
+
+# Enable file logging
+ENABLE_FILE_LOGGING=true
+
+# ===== NETWORK CONFIGURATION =====
+# CORS origin (for frontend access)
+CORS_ORIGIN=*
+
+# ===== PERFORMANCE CONFIGURATION =====
+# PM2 max memory restart (MB)
+PM2_MAX_MEMORY=200M
+
+# PM2 restart delay (milliseconds)
+PM2_RESTART_DELAY=4000
+
+# PM2 max restarts
+PM2_MAX_RESTARTS=10
+
+# ===== SECURITY CONFIGURATION =====
+# Enable HTTPS (if using SSL certificate)
+ENABLE_HTTPS=false
+
+# SSL certificate path (if using HTTPS)
+SSL_CERT_PATH=/path/to/cert.pem
+
+# SSL key path (if using HTTPS)
+SSL_KEY_PATH=/path/to/key.pem
+
+# ===== DATABASE CONFIGURATION (Optional) =====
+# Database URL (if using external database)
+# DATABASE_URL=postgresql://username:password@host:port/database
+
+# ===== BACKUP CONFIGURATION =====
+# Enable automatic backups
+ENABLE_BACKUPS=true
+
+# Backup interval (hours)
+BACKUP_INTERVAL=24
+
+# Backup retention (days)
+BACKUP_RETENTION=7
+
+# ===== NOTIFICATION CONFIGURATION =====
+# Enable email notifications (if configured)
+ENABLE_EMAIL_NOTIFICATIONS=false
+
+# Email SMTP configuration (if using email)
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=your_email@gmail.com
+# SMTP_PASS=your_app_password
+
+# ===== DEVELOPMENT CONFIGURATION =====
+# Enable debug mode
+DEBUG=false
+
+# Enable verbose logging
+VERBOSE=false
+
+# ===== CUSTOM CONFIGURATION =====
+# Add any custom environment variables below
+# CUSTOM_VAR=value 

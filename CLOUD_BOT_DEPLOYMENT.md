@@ -119,4 +119,54 @@ vercel ls
 
 # View deployment details
 vercel inspect
-``` 
+```
+
+## 🔧 **Fix the Git Conflict on Termux-Ubuntu:**
+
+### **Step 1: Stash your local changes**
+```bash
+git stash
+```
+
+### **Step 2: Pull the latest changes**
+```bash
+git pull origin main
+```
+
+### **Step 3: Apply your stashed changes (if needed)**
+```bash
+git stash pop
+```
+
+### **Step 4: Make the script executable and run it**
+```bash
+chmod +x start-all-fixed.sh
+./start-all-fixed.sh
+```
+
+## 🚨 **Alternative: Force Reset (if you want the latest version)**
+If you don't need your local changes:
+```bash
+git reset --hard HEAD
+git pull origin main
+chmod +x start-all-fixed.sh
+./start-all-fixed.sh
+```
+
+## 📱 **What the Fixed Script Will Do:**
+
+The `start-all-fixed.sh` script will:
+1. **Stop existing processes** (PM2, ngrok)
+2. **Start backend on port 10000** (fixed from 3000)
+3. **Start ngrok** and update the Gist
+4. **Show status** of all services
+
+## 🔔 **Expected Output:**
+```bash
+✅ Backend started on port 10000
+✅ ngrok tunnel created
+✅ Gist updated with new URL
+✅ All services running
+```
+
+**Run these commands on your Termux-Ubuntu device, not on Windows!** The git repository is now updated with all the fixes, so once you pull the changes, everything should work correctly. 🚀 

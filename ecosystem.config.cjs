@@ -1,51 +1,58 @@
 module.exports = {
   apps: [
     {
-      name: "connection-manager",
-      script: "./scripts/connection-manager.js",
-      watch: false,
-      env: {
-        NODE_ENV: "production",
-        PORT: 10000,
-        GIST_ID: process.env.GIST_ID || "d394f3df4c86cf1cb0040a7ec4138bfd",
-        GIST_FILENAME: process.env.GIST_FILENAME || "backend-url.txt",
-        GITHUB_TOKEN: process.env.GITHUB_TOKEN || "",
-        NGROK_AUTH_TOKEN: process.env.NGROK_AUTH_TOKEN || "",
-        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || "",
-        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || "",
-        TELEGRAM_ENABLE_NOTIFICATIONS: process.env.TELEGRAM_ENABLE_NOTIFICATIONS || "true"
-      },
-      error_file: "./logs/connection-manager-error.log",
-      out_file: "./logs/connection-manager.log",
-      log_file: "./logs/connection-manager-combined.log",
-      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
-      max_memory_restart: "100M",
-      restart_delay: 5000,
-      max_restarts: 15,
-      min_uptime: "30s",
+      name: 'backendserver',
+      script: 'server.mjs',
+      cwd: './',
       instances: 1,
-      exec_mode: "fork"
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: process.env.PORT || 10000
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: process.env.PORT || 10000
+      },
+      error_file: './logs/err.log',
+      out_file: './logs/out.log',
+      log_file: './logs/combined.log',
+      time: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      max_restarts: 10,
+      min_uptime: '10s',
+      restart_delay: 4000,
+      kill_timeout: 5000,
+      wait_ready: true,
+      listen_timeout: 8000
     },
     {
-      name: "backendserver",
-      script: "./server.mjs",
-      watch: false,
-      env: {
-        NODE_ENV: "production",
-        PORT: 10000
-      },
-      error_file: "./logs/backendserver-error.log",
-      out_file: "./logs/backendserver.log",
-      log_file: "./logs/backendserver-combined.log",
-      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
-      max_memory_restart: "200M",
-      restart_delay: 4000,
-      max_restarts: 10,
-      min_uptime: "10s",
+      name: 'connection-manager',
+      script: 'scripts/connection-manager.js',
+      cwd: './',
       instances: 1,
-      exec_mode: "fork",
-      wait_ready: true,
-      listen_timeout: 30000
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+      error_file: './logs/connection-err.log',
+      out_file: './logs/connection-out.log',
+      log_file: './logs/connection-combined.log',
+      time: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      max_restarts: 5,
+      min_uptime: '10s',
+      restart_delay: 2000,
+      kill_timeout: 3000
     },
     {
       name: "duckdns-updater",

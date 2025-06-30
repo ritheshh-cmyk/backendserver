@@ -1,0 +1,48 @@
+# === BULLETPROOF MOBILE REPAIR TRACKER ENVIRONMENT ===
+# Copy this file to .env and fill in your actual values
+
+# === SYSTEM CONFIGURATION ===
+NODE_ENV=production
+PORT=10000
+MAX_RETRIES=10
+RETRY_DELAY=5
+
+# === NGROK CONFIGURATION ===
+# Get your auth token from: https://dashboard.ngrok.com/get-started/your-authtoken
+NGROK_AUTH_TOKEN=your_ngrok_auth_token_here
+
+# === GITHUB GIST CONFIGURATION ===
+# Create a GitHub personal access token: https://github.com/settings/tokens
+GITHUB_TOKEN=your_github_token_here
+GIST_ID=d394f3df4c86cf1cb0040a7ec4138bfd
+GIST_FILENAME=backend-url.txt
+
+# === TELEGRAM BOT CONFIGURATION ===
+# Create a bot with @BotFather and get your chat ID
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+
+# === DATABASE CONFIGURATION ===
+# For PostgreSQL (optional - uses JSON by default)
+DATABASE_URL=postgresql://username:password@localhost:5432/mobile_repair
+
+# === JWT CONFIGURATION ===
+JWT_SECRET=your_super_secret_jwt_key_here_make_it_long_and_random
+JWT_EXPIRES_IN=7d
+
+# === CORS CONFIGURATION ===
+CORS_ORIGIN=*
+
+# === LOGGING ===
+LOG_LEVEL=info
+ENABLE_DEBUG_LOGS=false
+
+# === SECURITY ===
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+ENABLE_HTTPS=false
+
+# === MONITORING ===
+HEALTH_CHECK_INTERVAL=30000
+ENABLE_TELEGRAM_NOTIFICATIONS=true
+ENABLE_GIST_UPDATES=true 
